@@ -2,8 +2,6 @@
 
 ## Emerald is a MatLab-based viewer for CfRadial files.
 
-## **L**:rose: - The Lidar Radar Open Software Environment
-
 LROSE is a co-operative project between:
 
   * [Dept. of Atmospheric Science at Colorado State University (CSU)](http://www.atmos.colostate.edu/) and the
