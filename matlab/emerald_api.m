@@ -1140,14 +1140,11 @@ classdef emerald_api < handle
         params = struct;
         return;
       end
-      [p,f,e] = fileparts(filename);
-      if strcmp(e,'.m')
-        filename = fullfile(p,f);
-      end
+      
       try
         params = config2struct(filename);
       catch ME
-        fprintf('Unable to load ''%s''. The config file should be the name of a ''.m'' file without the path.  It should be found by matlab using the matlab path (see the commands: path, addpath, which).  The following is the actual reported error:\n',filename);
+        fprintf('Unable to load ''%s''.  The following is the actual reported error:\n',filename);
         rethrow(ME);
       end
     end

@@ -10,7 +10,13 @@ function str = config2struct(XXXXXfile,XXXXXnoerrFile)
 % % % ** Copyright (c) 2015, University Corporation for Atmospheric Research
 % % % ** (UCAR), Boulder, Colorado, USA.  All rights reserved. 
 
-
+%If file has no .m extension, add one
+[p,f,e] = fileparts(XXXXXfile);
+      if isempty(e)
+        XXXXXfile = fullfile(p,f);
+        XXXXXfile = [XXXXXfile '.m'];
+      end
+     
 if exist(XXXXXfile,'file')
   run(XXXXXfile);
   str = varstruct({},{'XXXXXfile','XXXXXnoerrFile'});
