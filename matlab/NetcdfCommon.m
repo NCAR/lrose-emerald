@@ -324,7 +324,8 @@ classdef NetcdfCommon < handle
       packvars = 0;
       unsigned_ints = 0;
       netcdfformat = 'CLASSIC'; % can be 'CLASSIC','64BIT','NETCDF4','NETCDF4_CLASSIC'
-
+      check_vars = 0;
+      
       clobber = 0;
       verbose = 0;
       force = 0;
@@ -557,7 +558,8 @@ classdef NetcdfCommon < handle
       p = obj.params;
       if any(var.datatype == obj.numeric_types)
         try
-          data = netcdf.getVar(nc, var.id,'double');
+          %data = netcdf.getVar(nc, var.id,'double');
+          data = netcdf.getVar(nc, var.id);
         catch ME
           if regexp(ME.message,'Index exceeds dimension bound')
             data = zeros(var.size);
@@ -749,7 +751,10 @@ classdef NetcdfCommon < handle
       if any(ind)
         % and if that dimension is to be added, just set that
         % dimension to 0;
-        ncin_dims.(dims{ind}).data = 0;
+        ind = find(ind);
+        for ll = 1:length(ind)
+          ncin_dims.(dims{ind(ll)}).data = 0;
+        end
       end;
       % loop through adding dimensions
       for ll = 1:length(dims)
@@ -791,7 +796,11 @@ classdef NetcdfCommon < handle
           attname = obj.untranslate_name(atts{ll});
         end
         if obj.params.verbose
-          fprintf('Creating Global Att "%s"\n',atts{l});
+          if varid==netcdf.getConstant('GLOBAL')
+            fprintf('Creating Global Att "%s"\n',atts{ll});
+          else
+            fprintf('Creating Variable Att "%s"\n',atts{ll});
+          end
         end;
         if strcmp(attname,'_FillValue')
           [varname,vtype] = netcdf.inqVar(nc,varid);
@@ -878,7 +887,9 @@ classdef NetcdfCommon < handle
           varid = netcdf.defVar(nc, varname, nctype, fliplr(dimids));
           
           % good checking spot
-          obj.endef_redef_check;
+          if p.check_vars
+            obj.endef_redef_check;
+          end
         else
           varid = vinfo(strcmp(varnames,ncin_var_names{k})).id;
         end

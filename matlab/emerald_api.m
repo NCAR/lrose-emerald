@@ -7,7 +7,7 @@ classdef emerald_api < handle
 % % % ** (UCAR), Boulder, Colorado, USA.  All rights reserved. 
 
 
-% $Revision: 1.6 $
+% $Revision: 1.9 $
   
   properties (GetAccess = public, SetAccess = public, SetObservable)
     % setable
@@ -53,7 +53,7 @@ classdef emerald_api < handle
       % load default config
       obj.default_params = obj.load_config(obj.default_config_file);
       % load user config
-      obj.params = obj.load_config(obj.user_config_file);
+      obj.user_config_params = obj.load_config(obj.user_config_file);
       % add user options
       if length(varargin)>=1
         obj.override_params = paramparses(obj.override_params,varargin(2:end),{},'none');
@@ -1056,23 +1056,29 @@ classdef emerald_api < handle
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% select_current_dataset
     function select_current_dataset(obj,varargin)
-    % GUI routine to select the current dataset
-      if emerald_databuffer.databuffer_length==0
-        obj.params.error_function('The Databuffer is empty.  Please select some datasets.');
-        return
-      end
-      
-      s = emerald_databuffer.databuffer_inventory_string;
-      s = regexp(s,sprintf('\n'),'split');
-      if isempty(obj.current_dataset)
-        iv = 2;
+      if length(varargin)>0
+        ok = 1;
+        selection = varargin{1}+1;
       else
-        iv = obj.current_dataset+1;
+        
+        % GUI routine to select the current dataset
+        if emerald_databuffer.databuffer_length==0
+          obj.params.error_function('The Databuffer is empty.  Please select some datasets.');
+          return
+        end
+        
+        s = emerald_databuffer.databuffer_inventory_string;
+        s = regexp(s,sprintf('\n'),'split');
+        if isempty(obj.current_dataset)
+          iv = 2;
+        else
+          iv = obj.current_dataset+1;
+        end
+        old_def_font = get(0,'DefaultUicontrolFontName');
+        set(0,'DefaultUicontrolFontName','fixedwidth');
+        [selection,ok] = listdlg('ListString',s,'SelectionMode','single','InitialValue',iv,'Name','Pick Dataset to Show','listsize',[ 600 400]);
+        set(0,'DefaultUicontrolFontName',old_def_font);
       end
-      old_def_font = get(0,'DefaultUicontrolFontName');
-      set(0,'DefaultUicontrolFontName','fixedwidth');
-      [selection,ok] = listdlg('ListString',s,'SelectionMode','single','InitialValue',iv,'Name','Pick Dataset to Show','listsize',[ 600 400]);
-      set(0,'DefaultUicontrolFontName',old_def_font);
       
       if ok && selection > 1
         obj.current_dataset = selection-1;
@@ -1116,9 +1122,15 @@ classdef emerald_api < handle
     %% regenerate_params
     function regenerate_params(obj,varargin)
     %fprintf('regenerating\n')
+      
+      
+    %obj.params = obj.default_params;
+    %  obj.params = paramparses(obj.params,obj.user_config_params,{},'warn_skip');
+    %  obj.params = paramparses(obj.params,obj.override_params,{},'warn_skip');
+
       obj.params = obj.default_params;
-      obj.params = paramparses(obj.params,obj.user_config_params,{},'warn_skip');
-      obj.params = paramparses(obj.params,obj.override_params,{},'warn_skip');
+      obj.params = copystruct(obj.user_config_params,obj.params,'copy_if_noexist',0,'recurse_structs',1','warn_if_noexist',1);
+      obj.params = copystruct(obj.override_params,obj.params,'copy_if_noexist',0,'recurse_structs',1,'warn_if_noexist',1);
     end
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

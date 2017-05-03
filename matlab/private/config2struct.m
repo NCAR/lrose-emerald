@@ -2,8 +2,9 @@ function str = config2struct(XXXXXfile,XXXXXnoerrFile)
 % config2struct   Evaluates a config file and returns the entries as a struct
 %
 %  usage str = config2struct(mfilename);
-%  mfilename should be a string containing a filname of a script 
-%     (without the '.m').  All variables set in the script are returned in
+%  mfilename should be a string containing a filname of a script.
+%     Filename can have path information or not, and accepts '.m' or not.
+%     All variables set in the script are returned in
 %     str.
 
 % % % ** Copyright (c) 2015, University Corporation for Atmospheric Research

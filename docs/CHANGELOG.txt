@@ -1,3 +1,11 @@
+  * Includes improvements to Netcdf library.
+
+  * Modified parameter handing to allow for fields in structures to
+    be handled.  
+
+  * Fixed a bug in config file usage (was silently ignored)
+    
+
 ** Version 20150326
  
   * Now works on Matlab 2014b+

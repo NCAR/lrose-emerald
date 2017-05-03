@@ -1,7 +1,7 @@
 %%% DO NOT MODIFY THIS FILE.  Instead use your own config file
 % and set the user_config_file property to that filename.
 
-% $Revision: 1.4 $
+% $Revision: 1.5 $
 
 % Default base data directory
 

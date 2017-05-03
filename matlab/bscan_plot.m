@@ -5,7 +5,7 @@ classdef bscan_plot
 % % % ** (UCAR), Boulder, Colorado, USA.  All rights reserved. 
 
   
-% $Revision: 1.6 $
+% $Revision: 1.7 $
   methods (Static = true)
 
     function h = call(em,fld,ax,varargin)

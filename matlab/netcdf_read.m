@@ -1,5 +1,5 @@
-function data  = NetcdfRead(filename,varargin)
-% usage ncout = NetcdfRead(filename,'param',value,...)
+function data  = netcdf_read(filename,varargin)
+% usage ncout = netcdf_read(filename,'param',value,...)
 %
 %   ncout is a Netcdf struct.  Type 'help NetcdfFormat' for more help.
 %

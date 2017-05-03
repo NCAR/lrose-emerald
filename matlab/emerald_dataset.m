@@ -21,7 +21,7 @@ classdef emerald_dataset
 % % % ** (UCAR), Boulder, Colorado, USA.  All rights reserved. 
 
 
-% $Revision: 1.6 $
+% $Revision: 1.7 $
   
   methods (Static = true)
     
@@ -139,7 +139,7 @@ classdef emerald_dataset
       end
 
       % now actually load metadata and requested vars
-      data = NetcdfRead(filename,'getall',1,'unpackvars',1,'getmode',1,'getvaratts',0,'varstoget',{meta_data_fields{:}  vars{:} });
+      data = netcdf_read(filename,'getall',1,'unpackvars',1,'getmode',1,'getvaratts',0,'varstoget',{meta_data_fields{:}  vars{:} });
 
       % convert the structure into an emerald_dataset struct
       new_data = emerald_dataset.netcdf2emerald(data,'sweep_index',sweep_index,...
@@ -257,6 +257,141 @@ classdef emerald_dataset
       end
     
     end    
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%
+    %% create_template_dataset
+    function data = create_template_dataset(varargin)
+    % create_template_dataset: create a emerald_dataset struct 
+    % usage: data = create_template_dataset('param1',value1,...)
+    % optional params:
+    % 
+    % outputs:
+    %  data: error number, if found.  0 for no error.
+    %  msg: string of error found.  
+    %
+    % This routine check that it is a struct, that it contains the required fields.
+    % 
+      
+      range = .250:.250:450;
+      azimuth = 0:.5:359.99;
+      elevation = 0.5;
+      convert_coords = 1;
+      latitude = -0.630446970462799;
+      longitude = 73.1027679443359;
+      altitude = 9.99999977648258;
+      
+      paramparse(varargin);
+      
+      if length(elevation) == 1
+        fixed_angle = elevation;
+        elevation = repmat(elevation,size(azimuth));
+        sweep_mode = 'azimuth_surveillance';
+      elseif length(azimuth)==1
+        fixed_angle = azimuth;
+        azimuth = repmat(azimuth,size(elevation));
+        sweep_mode = 'rhi';
+      end
+       
+      
+      data.file_info(1,1).atts(1,1).Conventions(1,1).data = 'CF/Radial instrument_parameters radar_parameters radar_calibration';
+      data.file_info(1,1).atts(1,1).Conventions(1,1).type = 'NC_CHAR';
+      data.file_info(1,1).atts(1,1).Conventions(1,1).original_name = 'Conventions';
+      data.file_info(1,1).atts(1,1).version(1,1).data = '1.2';
+      data.file_info(1,1).atts(1,1).version(1,1).type = 'NC_CHAR';
+      data.file_info(1,1).atts(1,1).version(1,1).original_name = 'version';
+      data.file_info(1,1).atts(1,1).title(1,1).data = 'Generic data based on SPOL radar data - WHARF';
+      data.file_info(1,1).atts(1,1).title(1,1).type = 'NC_CHAR';
+      data.file_info(1,1).atts(1,1).title(1,1).original_name = 'title';
+      data.file_info(1,1).atts(1,1).institution(1,1).data = 'EOL/NCAR';
+      data.file_info(1,1).atts(1,1).institution(1,1).type = 'NC_CHAR';
+      data.file_info(1,1).atts(1,1).institution(1,1).original_name = 'institution';
+      data.file_info(1,1).atts(1,1).references(1,1).data = 'WHARF';
+      data.file_info(1,1).atts(1,1).references(1,1).type = 'NC_CHAR';
+      data.file_info(1,1).atts(1,1).references(1,1).original_name = 'references';
+      data.file_info(1,1).atts(1,1).source(1,1).data = 'EMERALD';
+      data.file_info(1,1).atts(1,1).source(1,1).type = 'NC_CHAR';
+      data.file_info(1,1).atts(1,1).source(1,1).original_name = 'source';
+      data.file_info(1,1).atts(1,1).history(1,1).data = '';
+      data.file_info(1,1).atts(1,1).history(1,1).type = 'NC_CHAR';
+      data.file_info(1,1).atts(1,1).history(1,1).original_name = 'history';
+      data.file_info(1,1).atts(1,1).comment(1,1).data = '';
+      data.file_info(1,1).atts(1,1).comment(1,1).type = 'NC_CHAR';
+      data.file_info(1,1).atts(1,1).comment(1,1).original_name = 'comment';
+      data.file_info(1,1).atts(1,1).instrument_name(1,1).data = 'EMERALD';
+      data.file_info(1,1).atts(1,1).instrument_name(1,1).type = 'NC_CHAR';
+      data.file_info(1,1).atts(1,1).instrument_name(1,1).original_name = 'instrument_name';
+      data.file_info(1,1).atts(1,1).site_name(1,1).data = '';
+      data.file_info(1,1).atts(1,1).site_name(1,1).type = 'NC_CHAR';
+      data.file_info(1,1).atts(1,1).site_name(1,1).original_name = 'site_name';
+      data.file_info(1,1).atts(1,1).scan_name(1,1).data = 'Default';
+      data.file_info(1,1).atts(1,1).scan_name(1,1).type = 'NC_CHAR';
+      data.file_info(1,1).atts(1,1).scan_name(1,1).original_name = 'scan_name';
+      data.file_info(1,1).atts(1,1).scan_id(1,1).data = 0;
+      data.file_info(1,1).atts(1,1).scan_id(1,1).type = 'NC_INT';
+      data.file_info(1,1).atts(1,1).scan_id(1,1).original_name = 'scan_id';
+      data.file_info(1,1).atts(1,1).platform_is_mobile(1,1).data = 'false';
+      data.file_info(1,1).atts(1,1).platform_is_mobile(1,1).type = 'NC_CHAR';
+      data.file_info(1,1).atts(1,1).platform_is_mobile(1,1).original_name = 'platform_is_mobile';
+      data.file_info(1,1).atts(1,1).n_gates_vary(1,1).data = 'false';
+      data.file_info(1,1).atts(1,1).n_gates_vary(1,1).type = 'NC_CHAR';
+      data.file_info(1,1).atts(1,1).n_gates_vary(1,1).original_name = 'n_gates_vary';
+      data.file_info(1,1).dims(1,1).time(1,1).data = length(azimuth);
+      data.file_info(1,1).dims(1,1).time(1,1).original_name = 'time';
+      data.file_info(1,1).dims(1,1).range(1,1).data = length(range);
+      data.file_info(1,1).dims(1,1).range(1,1).original_name = 'range';
+      data.file_info(1,1).dims(1,1).sweep(1,1).data = 1;
+      data.file_info(1,1).dims(1,1).sweep(1,1).original_name = 'sweep';
+      data.file_info(1,1).dims(1,1).string_length_short(1,1).data = 32;
+      data.file_info(1,1).dims(1,1).string_length_short(1,1).original_name = 'string_length_short';
+      data.file_info(1,1).dims(1,1).string_length_medium(1,1).data = 64;
+      data.file_info(1,1).dims(1,1).string_length_medium(1,1).original_name = 'string_length_medium';
+      data.file_info(1,1).dims(1,1).string_length_long(1,1).data = 256;
+      data.file_info(1,1).dims(1,1).string_length_long(1,1).original_name = 'string_length_long';
+      data.file_info(1,1).dims(1,1).status_xml_length(1,1).data = 5537;
+      data.file_info(1,1).dims(1,1).status_xml_length(1,1).original_name = 'status_xml_length';
+      data.file_info(1,1).dims(1,1).r_calib(1,1).data = 1;
+      data.file_info(1,1).dims(1,1).r_calib(1,1).original_name = 'r_calib';
+      data.file_info(1,1).dims(1,1).frequency(1,1).data = 0;
+      data.file_info(1,1).dims(1,1).frequency(1,1).original_name = 'frequency';
+      data.file_info(1,1).load_info(1,1).filename = 'EMERALD';
+      data.file_info(1,1).load_info(1,1).format = 'FORMAT_NETCDF4';
+      data.file_info(1,1).unlim_dims = {};
+      data.file_info(1,1).filename = 'EMERALD';
+      
+      data.inds_info.gate_inds = NaN;
+      data.inds_info.ray_inds = NaN;
+      
+      data.meta_data(1,1).platform_type = 'fixed';
+      data.meta_data(1,1).latitude = latitude;
+      data.meta_data(1,1).longitude = longitude;
+      data.meta_data(1,1).altitude = altitude;
+      data.meta_data.range = reshape(range,1,[]);
+      data.meta_data.azimuth = reshape(azimuth,[],1);
+      data.meta_data.elevation = reshape(elevation,[],1);
+      data.meta_data.sweep_number = 0;
+      data.meta_data.sweep_mode = sweep_mode;
+      data.meta_data.fixed_angle = fixed_angle;
+      data.meta_data.time = reshape(1:length(azimuth),[],1);
+      data.meta_data.time_coverage_start_mld = now;
+      data.meta_data.time_start_mld = now;
+      
+      if convert_coords
+        % try to convert positions into lat/lons alts, and x/y (both elevation corrected and not), so this only has to be done once.
+        try
+          [data.meta_data.lat, data.meta_data.lon, data.meta_data.alt, data.meta_data.x, data.meta_data.y, data.meta_data.x_elcorr, data.meta_data.y_elcorr] = ...
+              emerald_utils.polar2cart(data.meta_data.range,data.meta_data.azimuth,data.meta_data.elevation,...
+                                       [data.meta_data.latitude,data.meta_data.longitude,data.meta_data.altitude/1000]);
+        catch ME
+          if strcmp(ME.identifier,'MATLAB:UndefinedFunction')
+            warning('Cannot convert polar to cartesian because the routines are not available');
+          end
+        end
+      end
+      data.moments = struct;
+      
+    end
+
+
     
     
   end
@@ -516,7 +651,7 @@ classdef emerald_dataset
       vars = cellify(vars);
       
       % just get variable and dimension ncinfo
-      ncinfo = NetcdfRead(filename,'getfiledim',1,'unpackvars',1,'getvardim',2,'getmode',2,'varstoget',{'sweep_number',...
+      ncinfo = netcdf_read(filename,'getfiledim',1,'unpackvars',1,'getvardim',2,'getmode',2,'varstoget',{'sweep_number',...
                           'sweep_start_ray_index','sweep_end_ray_index','ray_n_gates','ray_start_index','range',vars{:}});
       if nargout>1
         [meta_data_fields,moment_fields,vary_n_gates] = emerald_dataset.determine_fields(ncinfo);

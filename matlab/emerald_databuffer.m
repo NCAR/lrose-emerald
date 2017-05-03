@@ -41,7 +41,7 @@ classdef emerald_databuffer
 % % % ** (UCAR), Boulder, Colorado, USA.  All rights reserved. 
 
 
-% $Revision: 1.5 $
+% $Revision: 1.6 $
   
 % The databuffer is currently stored as a struct with fields 'datasets' (cell array of emerald_dataset structs) and 'index'
 % a struct

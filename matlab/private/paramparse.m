@@ -1,4 +1,4 @@
-function paramparse(parsearray,varlist,warnoff,defstr)
+function paramparse(parsearray,varlist,warnoff,defstr,re)
 % usage  paramparse(parsearray,varlist,quiet)
 %  parsearray is a cell array of the form
 %    {'var1name',var1value,...}
@@ -15,6 +15,8 @@ function paramparse(parsearray,varlist,warnoff,defstr)
 %       4 or 'none_skip' - like 1, but skip instead of running
 %  defstr (optional) - The string that is the paramparse_default base
 %      sting.  See paramparse_default
+%  re (optional) 1 or 0.  default 0.  If 1 then the varlist is treated
+%      as containing regular expressions.  This is slower.
 %
 %  This function evaluates
 %    var1name = var1value 
@@ -131,7 +133,17 @@ else
   fields = parsearray(1:2:end);
 end;
 
-[fields,field_inds] = intersect(fields,newvarlist);
+if nargin<5 || isempty(re)
+  re = 0;
+end
+
+if ~re
+  [fields,field_inds] = intersect(fields,newvarlist);
+else
+  field_inds = find(strcmpr(fields,newvarlist,[],1));
+  fields = fields(field_inds);
+end
+
 if ~isstrct
   values = parsearray(2*field_inds);
 end;
@@ -149,7 +161,7 @@ elseif length(warn)>1
 end;  
 
 skip = 0;
-if nargin==3 
+if nargin>=3 && ~isempty(warnoff)
   switch warnoff
    case {2,'error'}
     errstate = 'error';

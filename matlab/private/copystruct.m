@@ -11,6 +11,7 @@ function y = copystruct(x,y,varargin)
 %
 % copy_if_noexist = 1; if 1 then always copy fields.  If 0, then only copy
 %            fields in x over to y IF the field already exists in y.
+% warn_if_noexist = 0; if 1 then warn when a field in x does not exist in y
 %
 % recurse_structs = 0; If 1 then recursively copy structures; If 0 then
 %            the whole field is just copied over - wiping out the 
@@ -25,6 +26,8 @@ function y = copystruct(x,y,varargin)
 
 
 copy_if_noexist = 1;
+warn_if_noexist = 0;
+
 recurse_structs = 0;
 flds = {};
 dest_field_fun = @(x) x;
@@ -55,6 +58,14 @@ if ~isempty(flds)
   end;
   xflds = intersect(xflds,flds);
 end;
+
+if warn_if_noexist
+  % figure out which "mangled" xnames are not in y
+  [~,inds] = setdiff(icellfun(xflds,dest_field_fun),yflds);
+  for ll = 1:length(inds)
+    warning(sprintf('Field %s does not exist in y (accounting for field mangling if applicable)',xflds{inds(ll)}));
+  end
+end
 
 if ~copy_if_noexist
   % figure out which "mangled" xnames are in y

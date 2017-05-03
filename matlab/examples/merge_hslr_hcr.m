@@ -1,4 +1,4 @@
-function [hcr_regrid,hsrl] = merge_hslr_hcr(hsrl_file,hcr_files)
+function [hcr_regrid,hsrl,hcr] = merge_hslr_hcr(hsrl_file,hcr_files)
 % merge_hslr_hcr: routine to merge hsrl file with hcr files
 %
 % usage: hsrl_merge = merge_hslr_hcr(hsrl_file,hcr_files)
@@ -26,6 +26,7 @@ function [hcr_regrid,hsrl] = merge_hslr_hcr(hsrl_file,hcr_files)
 % load the whole hsrl_file
 hsrl = emerald_dataset.load_cfradial(hsrl_file,'all_fields','sweep_index',inf,'do_check',0,'convert_coords',0);
 
+hcr_files = cellify(hcr_files);
 %if ~iscell(hcr_files)
 %  hcr_files = findfiles(sprintf('%s -name "*.nc"|sort',hcr_files));
 %end
@@ -88,8 +89,10 @@ for ll = 1:length(meta_fields)
     meta_field_type{ll} = 'skip';
   elseif isequal(size(hcr.meta_data.(meta_fields{ll})),[hcr.file_info.dims.time.data 1])
     meta_field_type{ll} = 'subvector';
-  else
+  elseif length(hcr.meta_data.(meta_fields{ll}))==1
     meta_field_type{ll} = 'vector';
+  else
+    meta_field_type{ll} = 'cell';
   end
   switch meta_field_type{ll} 
     case 'cell'

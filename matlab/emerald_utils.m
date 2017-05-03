@@ -6,7 +6,7 @@ classdef emerald_utils
 % % % ** (UCAR), Boulder, Colorado, USA.  All rights reserved. 
 
   
-% $Revision: 1.3 $
+% $Revision: 1.4 $
   
   methods (Static = true)
     function [missing_flds,msg] = check_fields_exist(str,flds)
