@@ -8,20 +8,22 @@ function str = config2struct(XXXXXfile,XXXXXnoerrFile)
 %     str.
 
 % % % ** Copyright (c) 2015, University Corporation for Atmospheric Research
-% % % ** (UCAR), Boulder, Colorado, USA.  All rights reserved. 
+% % % ** (UCAR), Boulder, Colorado, USA.  All rights reserved.
 
 %If file has no .m extension, add one
 [p,f,e] = fileparts(XXXXXfile);
-      if isempty(e)
-        XXXXXfile = fullfile(p,f);
-        XXXXXfile = [XXXXXfile '.m'];
-      end
-     
+if isempty(e)
+    XXXXXfile = fullfile(p,f);
+    XXXXXfile = [XXXXXfile '.m'];
+end
+
+clear p f e;
+
 if exist(XXXXXfile,'file')
-  run(XXXXXfile);
-  str = varstruct({},{'XXXXXfile','XXXXXnoerrFile'});
+    run(XXXXXfile);
+    str = varstruct({},{'XXXXXfile','XXXXXnoerrFile'});
 elseif nargin>1 && ~isempty(XXXXXnoerrFile) && strcmp(XXXXXnoerrFile,XXXXXfile)
-  str = {};
+    str = {};
 else
   error(sprintf('Parameter file "%s" does not exist',file));
 end
