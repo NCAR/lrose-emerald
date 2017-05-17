@@ -159,6 +159,18 @@ classdef emerald_dataset
     end
     
     %%%%%%%%%%%%%%%%%%%%%%%%
+    %% write_cfradial
+    function write_cfradial(em_dataset,outfilename)
+        %first running version. varargin will be supported in the future.
+        % Save cfradial file from emerald_dataset structure
+        
+        out_struct=emerald_dataset.emerald2netcdf(em_dataset);
+        
+        netcdf_write(out_struct, outfilename,'netcdfformat',em_dataset(1).file_info.load_info.params.netcdfformat);
+        
+    end
+
+    
     %% check_dataset
     function [result,msg] = check_dataset(cstr,varargin)
     % check_dataset: Checks a struct array of emerald_dataset structs
@@ -391,10 +403,7 @@ classdef emerald_dataset
       
     end
 
-
-    
-    
-  end
+     end
 
   
   
@@ -567,65 +576,193 @@ classdef emerald_dataset
     
     end
     
-    %%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%
+    
+    %% emerald2netcdf
+    function out_data = emerald2netcdf(data,varargin)
+        %!!!!!!!!!!!!!!not well tested yet!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        %reconvert emerald data structure to structure that serves as input for netcdf_write
+        
+        %so far the function converts only whole files. varargin will be
+        %supported in the near future
+        
+        %initialize output data structure
+        out_data=struct;
+        
+        %copy general information files
+        info_fields_in=fieldnames(data(1).file_info);
+        for i=1:length(info_fields_in)
+            out_data.(info_fields_in{i})=data(1).file_info.(info_fields_in{i});
+        end
+        
+        %Fill 'vars' field copy meta data
+        meta_fields_in=fieldnames(data(1).meta_data_info);
+        
+        
+        %initialize first number of ray_start_index
+        ray_start_index_first=0;
+        
+        %loop through meta data fields
+        for i=1:length(meta_fields_in)
+            %copy meta data info
+            out_data.vars.(meta_fields_in{i})=data(1).meta_data_info.(meta_fields_in{i});
+            
+            %loop through sweeps
+            for j=1:size(data,2)
+                
+                %rebuild ray_n_gates and ray_start_index for n_gates that are
+                %constant within each sweep
+                if strcmp(meta_fields_in{i},'ray_n_gates')
+                    temp_data=nan(length(data(j).inds_info.ray_inds),1);
+                    temp_data(:,:)=size(data(j).inds_info.gate_inds,1);
+                elseif strcmp(meta_fields_in{i},'ray_start_index')
+                    multip_vec=(1:1:length(data(j).inds_info.ray_inds));
+                    temp_vec=nan(length(data(j).inds_info.ray_inds),1);
+                    temp_vec(:,:)=size(data(j).inds_info.gate_inds,1);
+                    multip_temp=temp_vec.*multip_vec';
+                    %for first sweep add zero at beginning
+                    if j==1
+                        multip_temp=cat(1,0,multip_temp);
+                    elseif j==size(data,2)
+                        %for last sweep remove last number
+                        multip_temp=multip_temp(1:end-1,:);
+                    end
+                    temp_data=multip_temp+ray_start_index_first;
+                    ray_start_index_first=temp_data(end,:);
+                end
+                %get dimensions
+                dimcell=out_data.vars.(meta_fields_in{i}).dims;
+                %get relevant data
+                temp_data=data(j).meta_data.(meta_fields_in{i});
+                % reshape column vector char arrays
+                if ischar(temp_data) && length(temp_data)==prod(size(temp_data)) && length(dimcell)<2
+                    temp_data = temp_data';
+                end
+                
+                if length(dimcell)==0
+                    % if dim'less, then cp
+                    out_data.vars.(meta_fields_in{i}).data = temp_data;
+                elseif sum(ismember(dimcell,'sweep'))>0 || sum(ismember(dimcell,'time'))>0
+                    % if has dim 'sweep' x whatever or 'time' x whatever
+                    %then put data back together
+                    
+                    %check if data field does not exists in structure then
+                    %copy data over
+                    if ~isfield(out_data.vars.(meta_fields_in{i}),'data')
+                        out_data.vars.(meta_fields_in{i}).data = temp_data;
+                    else
+                        %otherwise append data to existing field
+                        out_data.vars.(meta_fields_in{i}).data = cat(1,out_data.vars.(meta_fields_in{i}).data,temp_data);
+                    end
+                    
+                else
+                    % otherise just cp it over
+                    out_data.vars.(meta_fields_in{i}).data = temp_data;
+                    
+                end
+                
+            end
+            
+        end
+        
+        
+        %calculate n_points and find sweep index with maximum range
+        max_range_ind=nan;
+        max_range=0;
+        num_points=0;
+        for j=1:size(data,2)
+            num_points=num_points+prod(size(data(j).inds_info.gate_inds));
+            if size(data(j).inds_info.gate_inds,1)>max_range
+                max_range=size(data(j).inds_info.gate_inds,1);
+                max_range_ind=j;
+            end
+        end
+        
+        out_data.dims.n_points.data=num_points;
+        
+        if isfield(out_data.vars,'range')
+            % take range from sweep with maximum ranges, reshape range so is col vector and turn back to meter.
+            out_data.vars.range.data=data(max_range_ind).meta_data.range;
+            out_data.vars.range.data = reshape(out_data.vars.range.data,[],1).*1000;
+        end
+        
+        
+        %resize moments to one dimensional arrays
+        %get list of moment fields from first sweep
+        moment_fields_in=fieldnames(data(1).moments);
+        
+        %loop through moment fields
+        for i=1:length(moment_fields_in)
+            %copy moment fields info
+            out_data.vars.(moment_fields_in{i})=data(1).moments_info.(moment_fields_in{i});
+            %loop through sweeps
+            all_sweep_vec=[];
+            for j=1:size(data,2)
+                moment_data=data(j).moments.(moment_fields_in{i});
+                moment_vec=reshape(moment_data',[],1);
+                all_sweep_vec=cat(1,all_sweep_vec,moment_vec);
+            end
+            out_data.vars.(moment_fields_in{i}).data=all_sweep_vec;
+        end
+    end
     %% determine_gate_inds
     function [ray_inds,gate_inds,final_num_gates]  = determine_gate_inds(data,sweep_index,vary_n_gates)
-    % determine_gate_inds: figure out the gate_inds to transform the data from the nc file into the matlab struct
-    % usage: [ray_inds,gate_inds,final_num_gates]  = determine_gate_inds(data,sweep_index,vary_n_gates)
-    % inputs:
-    %   data: raw nc data
-    %   sweep_index: sweep index to pull out
-    %   vary_n_gates: either 1 or 0 depending on whether the data has variable num of gates.
-    % outputs:
-    %   ray_inds: indices of rays to extract for this sweep
-    %   gate_inds: indices of gates to extract for this sweep
-    %   final_num_gate: the final number of gates needed.
-      
-      [missing_flds,msg] = emerald_utils.check_nc_fieldsdata_exist(data.vars,{'sweep_start_ray_index','sweep_end_ray_index'},'data');
-      if length(missing_flds)>0
-        error('There are missing required fields in the file "%s":\n%s',filename,msg);
-      end      
-      % FIGURE OUT HOW TO CONVERT PACKED STRUCTURE INTO NORMAL MULTIDIM ARRAY
-      ray_inds = 1+(data.vars.sweep_start_ray_index.data(sweep_index):data.vars.sweep_end_ray_index.data(sweep_index));
-      
-      if vary_n_gates
-        [missing_flds,msg] = emerald_utils.check_nc_fieldsdata_exist(data.vars,{'ray_n_gates','ray_start_index'},'data');
+        % determine_gate_inds: figure out the gate_inds to transform the data from the nc file into the matlab struct
+        % usage: [ray_inds,gate_inds,final_num_gates]  = determine_gate_inds(data,sweep_index,vary_n_gates)
+        % inputs:
+        %   data: raw nc data
+        %   sweep_index: sweep index to pull out
+        %   vary_n_gates: either 1 or 0 depending on whether the data has variable num of gates.
+        % outputs:
+        %   ray_inds: indices of rays to extract for this sweep
+        %   gate_inds: indices of gates to extract for this sweep
+        %   final_num_gate: the final number of gates needed.
+        
+        [missing_flds,msg] = emerald_utils.check_nc_fieldsdata_exist(data.vars,{'sweep_start_ray_index','sweep_end_ray_index'},'data');
         if length(missing_flds)>0
-          error('There are missing required fields in the file "%s":\n%s',filename,msg);
-        end      
-        
-        % pull out the number of gates and the index starts for the rays in this sweep
-        ngates = data.vars.ray_n_gates.data(ray_inds);
-        rstart = data.vars.ray_start_index.data(ray_inds)+1;
-        
-        % figure out how many gates we need to hold the sweep
-        final_num_gates = max(ngates);
-        
-        % the idea is to generate a matrix of indices such that 
-        % data.vars.fld(gate_inds) is a num_beams x num_ranges matrix.
-        % The complication is that the number of gates in an az could
-        % vary.  
-        
-        % create the matrix (num_ranges x num_beams) if indices with rstart
-        % as the first row, rstart+1 for the second, etc.
-        gate_inds = ones(final_num_gates,length(ray_inds));
-        gate_inds(1,:) = rstart;
-        gate_inds = cumsum(gate_inds,1);
-        
-        % The problem is that rays that are shorter than final_num_gates will go
-        % beyond their bounds.  So NaN these out.
-        ng = resize((ngates+rstart-1).',size(gate_inds));
-        gate_inds(gate_inds>ng) = NaN;
-      else
-        [missing_flds,msg] = emerald_utils.check_fields_exist(data.dims,{'time','range'});
-        if length(missing_flds)>0
-          error('There are missing required fields in the file "%s":\n%s',filename,msg);
+            error('There are missing required fields in the file "%s":\n%s',filename,msg);
         end
-        gate_inds = repmat(logical(0),data.dims.time.data, data.dims.range.data);
-        gate_inds(ray_inds,:) = 1;
-        gate_inds = reshape(find(gate_inds),length(ray_inds),data.dims.range.data).';
-        final_num_gates = data.dims.range.data;
-      end
+        % FIGURE OUT HOW TO CONVERT PACKED STRUCTURE INTO NORMAL MULTIDIM ARRAY
+        ray_inds = 1+(data.vars.sweep_start_ray_index.data(sweep_index):data.vars.sweep_end_ray_index.data(sweep_index));
+        
+        if vary_n_gates
+            [missing_flds,msg] = emerald_utils.check_nc_fieldsdata_exist(data.vars,{'ray_n_gates','ray_start_index'},'data');
+            if length(missing_flds)>0
+                error('There are missing required fields in the file "%s":\n%s',filename,msg);
+            end
+            
+            % pull out the number of gates and the index starts for the rays in this sweep
+            ngates = data.vars.ray_n_gates.data(ray_inds);
+            rstart = data.vars.ray_start_index.data(ray_inds)+1;
+            
+            % figure out how many gates we need to hold the sweep
+            final_num_gates = max(ngates);
+            
+            % the idea is to generate a matrix of indices such that
+            % data.vars.fld(gate_inds) is a num_beams x num_ranges matrix.
+            % The complication is that the number of gates in an az could
+            % vary.
+            
+            % create the matrix (num_ranges x num_beams) if indices with rstart
+            % as the first row, rstart+1 for the second, etc.
+            gate_inds = ones(final_num_gates,length(ray_inds));
+            gate_inds(1,:) = rstart;
+            gate_inds = cumsum(gate_inds,1);
+            
+            % The problem is that rays that are shorter than final_num_gates will go
+            % beyond their bounds.  So NaN these out.
+            ng = resize((ngates+rstart-1).',size(gate_inds));
+            gate_inds(gate_inds>ng) = NaN;
+        else
+            [missing_flds,msg] = emerald_utils.check_fields_exist(data.dims,{'time','range'});
+            if length(missing_flds)>0
+                error('There are missing required fields in the file "%s":\n%s',filename,msg);
+            end
+            gate_inds = repmat(logical(0),data.dims.time.data, data.dims.range.data);
+            gate_inds(ray_inds,:) = 1;
+            gate_inds = reshape(find(gate_inds),length(ray_inds),data.dims.range.data).';
+            final_num_gates = data.dims.range.data;
+        end
     end
     
       
