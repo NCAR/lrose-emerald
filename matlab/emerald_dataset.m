@@ -160,13 +160,44 @@ classdef emerald_dataset
     
     %%%%%%%%%%%%%%%%%%%%%%%%
     %% write_cfradial
-    function write_cfradial(em_dataset,outfilename)
-        %first running version. varargin will be supported in the future.
-        % Save cfradial file from emerald_dataset structure
+    function write_cfradial(em_dataset,outfilename,varargin)
+        % write_cfradial: Save emerald_dataset struct as CFRadial file
+        % usage: write_cfradial(em_dataset,outfilename,'param1',value1,...)
+        %  em_dataset: emerald_dataset struct
+        %  outfilename: string containing filename of CFRadial file
+        % possible params:
+        %  vars = []; % cell array of field names. If empty, all are saved.
+        %  sweep_number = []; % array of sweep numbers (from original CFRadial
+        %  file). If empty, sweep_index is used.
+        %  sweep_index = inf; % array of sweep indices (index of
+        %  'sweep_number'). If inf, all are saved.
         
-        out_struct=emerald_dataset.emerald2netcdf(em_dataset);
+        vars = {};
+        sweep_number = [];
+        sweep_index = inf;
         
-        netcdf_write(out_struct, outfilename,'netcdfformat',em_dataset(1).file_info.load_info.params.netcdfformat);
+        paramparse(varargin);
+        
+        %check if required input arguments exist
+        if nargin<2
+            error('Required inputs: em_dataset and outfilename.');
+        end
+        
+        %check if all requested output fields exist
+        if ~isempty(vars)
+            fields_exist1 = logical(icellfun(vars,@(x) any(isfield(em_dataset(1).moments,x)),'return_type','mat'));
+            fields_exist2 = logical(icellfun(vars,@(x) any(isfield(em_dataset(1).meta_data,x)),'return_type','mat'));
+            fields_exist = fields_exist1+fields_exist2;
+            if any(~fields_exist)
+                error(sprintf('Field ''%s'' does not exist\n',vars{~fields_exist}))
+            end
+        end
+        
+        out_struct=emerald_dataset.emerald2netcdf(em_dataset,...
+            'sweep_number',sweep_number,...
+            'sweep_index',sweep_index);
+        
+        netcdf_write(out_struct, outfilename,'varstoput',vars,'netcdfformat',em_dataset(1).file_info.load_info.params.netcdfformat);
         
     end
 
@@ -403,7 +434,7 @@ classdef emerald_dataset
       
     end
 
-     end
+  end
 
   
   
@@ -580,25 +611,57 @@ classdef emerald_dataset
     
     %% emerald2netcdf
     function out_data = emerald2netcdf(data,varargin)
-        %!!!!!!!!!!!!!!not well tested yet!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        %reconvert emerald data structure to structure that serves as input for netcdf_write
+        % write_cfradial: Convert emerald struct to netcdf_write struct
+        % usage: emerald2netcdf(data,'param1',value1,...)
+        %  data: emerald_datase struct
+        % possible params:
+        %  sweep_number = []; % array of sweep numbers (from original CFRadial
+        %  file). If empty, sweep_index is used.
+        %  sweep_index = inf; % array of sweep indices (index of
+        %  'sweep_number'). If inf, all are saved.
         
-        %so far the function converts only whole files. varargin will be
-        %supported in the near future
+        sweep_number = [];
+        sweep_index = inf;
+        
+        paramparse(varargin);
+        
+        % if given a sweep number, then figure out which indices the user wanted.
+        if ~isempty(sweep_number)
+            sweep_index=nan(length(sweep_number),1);
+            % figure out which sweep_index they want
+            for i = 1:length(sweep_number) %loop through sweep_numbers
+                for j=1:size(data,2) %go through each sweep index and look for match whith sweep number
+                    if data(j).meta_data.sweep_number==sweep_number(i)
+                        sweep_index(i,1) = j;
+                    end
+                end
+            end
+            %check if all required sweep numbers exist
+            no_sweep=find(isnan(sweep_index));
+            if length(no_sweep)>0
+                error('Sweep number %i does not exist.',sweep_number(no_sweep));
+            end
+        end
+        
+        %if sweep index is inf then create sweep_index with all available
+        %sweeps
+        if sweep_index==inf
+            sweep_index=(1:1:size(data,2));
+        end
         
         %initialize output data structure
         out_data=struct;
         
-        %copy general information files
+        %%%%%%%%%%%%%%%% general information files %%%%%%%%%%%%%%%%%%%%
         info_fields_in=fieldnames(data(1).file_info);
         for i=1:length(info_fields_in)
             out_data.(info_fields_in{i})=data(1).file_info.(info_fields_in{i});
         end
         
-        %Fill 'vars' field copy meta data
+        %%%%%%%%%%%%%%%%% Meta data %%%%%%%%%%%%%%%%%%%%
+        %create list of meta data fields
         meta_fields_in=fieldnames(data(1).meta_data_info);
-        
-        
+                
         %initialize first number of ray_start_index
         ray_start_index_first=0;
         
@@ -608,9 +671,10 @@ classdef emerald_dataset
             out_data.vars.(meta_fields_in{i})=data(1).meta_data_info.(meta_fields_in{i});
             
             %loop through sweeps
-            for j=1:size(data,2)
+            for k=1:length(sweep_index)
+                j=sweep_index(k);
                 
-                %rebuild ray_n_gates and ray_start_index for n_gates that are
+                %%rebuild ray_n_gates and ray_start_index for n_gates that are
                 %constant within each sweep
                 if strcmp(meta_fields_in{i},'ray_n_gates')
                     temp_data=nan(length(data(j).inds_info.ray_inds),1);
@@ -630,6 +694,7 @@ classdef emerald_dataset
                     temp_data=multip_temp+ray_start_index_first;
                     ray_start_index_first=temp_data(end,:);
                 end
+                
                 %get dimensions
                 dimcell=out_data.vars.(meta_fields_in{i}).dims;
                 %get relevant data
@@ -656,21 +721,22 @@ classdef emerald_dataset
                     end
                     
                 else
-                    % otherise just cp it over
+                    % otherwise just cp it over
                     out_data.vars.(meta_fields_in{i}).data = temp_data;
                     
                 end
                 
             end
             
-        end
+        end %meta data complete
         
-        
+        %%%%%%%%%%%%%%%% calculate new dimensions %%%%%%%%%%%%%%%%%%%%%%%%
         %calculate n_points and find sweep index with maximum range
         max_range_ind=nan;
         max_range=0;
         num_points=0;
-        for j=1:size(data,2)
+        for k=1:length(sweep_index)
+            j=sweep_index(k);
             num_points=num_points+prod(size(data(j).inds_info.gate_inds));
             if size(data(j).inds_info.gate_inds,1)>max_range
                 max_range=size(data(j).inds_info.gate_inds,1);
@@ -680,13 +746,18 @@ classdef emerald_dataset
         
         out_data.dims.n_points.data=num_points;
         
+        %change dimensions of output file
+        out_data.dims.sweep.data=length(sweep_index);
+        out_data.dims.time.data=length(out_data.vars.time.data);
+        out_data.dims.range.data=max_range;
+        
         if isfield(out_data.vars,'range')
-            % take range from sweep with maximum ranges, reshape range so is col vector and turn back to meter.
+            % take range from sweep with maximum ranges, reshape range so it is col vector and turn back to meter.
             out_data.vars.range.data=data(max_range_ind).meta_data.range;
             out_data.vars.range.data = reshape(out_data.vars.range.data,[],1).*1000;
         end
         
-        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%% moments %%%%%%%%%%%%%%%%%%%%%%%%%%% 
         %resize moments to one dimensional arrays
         %get list of moment fields from first sweep
         moment_fields_in=fieldnames(data(1).moments);
@@ -697,7 +768,8 @@ classdef emerald_dataset
             out_data.vars.(moment_fields_in{i})=data(1).moments_info.(moment_fields_in{i});
             %loop through sweeps
             all_sweep_vec=[];
-            for j=1:size(data,2)
+            for k=1:length(sweep_index)
+                j=sweep_index(k);
                 moment_data=data(j).moments.(moment_fields_in{i});
                 moment_vec=reshape(moment_data',[],1);
                 all_sweep_vec=cat(1,all_sweep_vec,moment_vec);
