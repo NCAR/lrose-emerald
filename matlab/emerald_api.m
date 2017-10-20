@@ -947,6 +947,9 @@ classdef emerald_api < handle
         return
       end
       
+      %Check if databuffer is currently empty
+      buffer_empty=emerald_databuffer.databuffer_length==0;
+      
       h = obj.msgbox(sprintf('\nPlease wait\nLoading....'));
       obj.fetch_by_filename_sweep(files,'all_fields','sweep_index',inf);
       close(h);
@@ -954,6 +957,11 @@ classdef emerald_api < handle
       
       if isempty(obj.current_dataset)
         obj.current_dataset = 1;
+      end
+      
+      %If databuffer is empty plot the first file
+      if buffer_empty
+          obj.plot_default_plots;
       end
     end
     
@@ -993,6 +1001,9 @@ classdef emerald_api < handle
         return
       end
       
+      %Check if databuffer is currently empty
+      buffer_empty=emerald_databuffer.databuffer_length==0;
+      
       h = obj.msgbox(sprintf('\nPlease wait\nLoading....'));
       obj.fetch_by_filename_sweep(files,moment_fields(selection),'sweep_number',sweep_numbers);
       close(h);
@@ -1001,6 +1012,10 @@ classdef emerald_api < handle
       if isempty(obj.current_dataset)
         obj.current_dataset = 1;
       end
+      %If databuffer is empty plot the first file
+      if buffer_empty
+          obj.plot_default_plots;
+      end
     end
        
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1008,6 +1023,7 @@ classdef emerald_api < handle
     function clear_databuffer(obj,varargin)
     % clears the databuffer
       emerald_databuffer.clear_databuffer;
+      obj.current_dataset = [];
     end
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1113,7 +1129,45 @@ classdef emerald_api < handle
       fprintf('%s',repr(d.moments,'prefix','current_dataset_moments','max_array_size',100));
     end
     
+   %% plot_default_plots
+   function plot_default_plots(obj)
+       % Creates default plots when first selecting a data set
+       [res,msg] = obj.check_plot_window;
+       if res
+           obj.params.error_function(sprintf('ERROR: %s',msg));
+           return
+       end
+       
+       ds = obj.get_current_dataset;
+       
+       moments = fieldnames(ds.moments);
+       avail_plots = obj.params.available_plots;
+       plot_default = find(strcmp(obj.params.default_plot,{avail_plots.name}));
+       
+       
+       plots = obj.default_plot_state_struct;
+       old_plots = obj.plots;
+       ah = obj.axes_handles_list;
+       % run through the controls, pulling out the appropriate plot for each and setting the plots
+       for ll = 1:obj.params.plot_panels
+           if ll>length(moments)
+               plots(ll).moment_field = moments{length(moments)};
+           else
+               plots(ll).moment_field = moments{ll};
+           end
+           plots(ll).plot_type = plot_default(1);
+           if length(old_plots)>=ll && old_plots(ll).plot_type~=plots(ll).plot_type
+               cla(ah(ll));
+           end
+       end
+       
+       % save it and no render the plots
+       obj.plots = plots;
+       obj.render_plots;
     
+    end
+    
+    %%%%%%%%    
   end
   
   methods (Access = private)
