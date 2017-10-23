@@ -18,6 +18,12 @@ classdef ppi_plot
       paramparse(options,'mode');
       
       ds = em.get_current_dataset;
+      %try to find a unit for the field
+      try
+          bar_units=ds.moments_info.(fld).atts.units.data;
+      catch
+          bar_units='';
+      end
       [rlat,rlon,ralt] = emerald_utils.get_platform_midloc(ds.meta_data.latitude,ds.meta_data.longitude,ds.meta_data.altitude);
       switch mode
         case 'polar'
@@ -33,7 +39,8 @@ classdef ppi_plot
           Y = ds.meta_data.lat;
           radar_location = [rlat rlon ralt];
       end          
-      h = ppi_plot.plot(X,Y,ds.moments.(fld),'ax',ax,'elev',median(ds.meta_data.elevation),'alt',ds.meta_data.alt,'radar_location',radar_location,options{:});
+      h = ppi_plot.plot(X,Y,ds.moments.(fld),'ax',ax,'elev',median(ds.meta_data.elevation),...
+          'alt',ds.meta_data.alt,'radar_location',radar_location,options{:},'bar_units',bar_units);
       
     end
     
@@ -81,6 +88,7 @@ classdef ppi_plot
       fix_coords = 1;
       contour_field = [];
       contour_vals = [];
+      bar_units='';
 
       % grid info
       range_rings = 50:50:450;
@@ -135,7 +143,9 @@ classdef ppi_plot
       end
 
       h = surfmat(x,y,fld,{'fix_coords',fix_coords,'no_colorbar',1});
-      colorbar('East','YAxisLocation','right');
+      %colorbar('East','YAxisLocation','right');
+      hcb=colorbar;
+      set(get(hcb,'Title'),'String',bar_units)
       maxalt = max(alt(:))+1;
       hold on
       if ~isempty(contour_field)
