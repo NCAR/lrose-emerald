@@ -19,6 +19,12 @@ classdef rhi_plot
       
       ds = em.get_current_dataset;
       
+      try
+          bar_units=ds.moments_info.(fld).atts.units.data;
+      catch
+          bar_units='';
+      end
+      
       X = ds.meta_data.x_elcorr;
       Y = ds.meta_data.y_elcorr;
       S = sqrt(X.^2+Y.^2);
@@ -30,7 +36,8 @@ classdef rhi_plot
       [~,~,ralt] = emerald_utils.get_platform_midloc(ds.meta_data.latitude,ds.meta_data.longitude,ds.meta_data.altitude);
       radar_location = [0 0 ralt];
       
-      h = rhi_plot.plot(S,Z,ds.moments.(fld),'ax',ax,'az',median(ds.meta_data.azimuth),'alt',ds.meta_data.alt,'radar_location',radar_location,options{:});
+      h = rhi_plot.plot(S,Z,ds.moments.(fld),'ax',ax,'az',median(ds.meta_data.azimuth),...
+          'alt',ds.meta_data.alt,'radar_location',radar_location,options{:},'bar_units',bar_units);
       
     end
     
@@ -50,6 +57,7 @@ classdef rhi_plot
       fix_coords = 1;
       contour_field = [];
       contour_vals = [];
+      bar_units='';
 
       % grid info
       %range_rings = 50:50:450;
@@ -82,7 +90,9 @@ classdef rhi_plot
       end
 
       h = surfmat(S,Z,fld,{'fix_coords',fix_coords,'no_colorbar',1});
-      colorbar('East','YAxisLocation','right');
+      %colorbar('East','YAxisLocation','right');
+      hcb=colorbar;
+      set(get(hcb,'Title'),'String',bar_units);
       hold on
       if ~isempty(contour_field)
         if ~isequal(size(contour_field),size(fld))

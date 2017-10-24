@@ -16,6 +16,12 @@ classdef bscan_plot
 
       ds = em.get_current_dataset;
       
+      try
+          bar_units=ds.moments_info.(fld).atts.units.data;
+      catch
+          bar_units='';
+      end
+      
       if isempty(emerald_utils.check_fields_exist(ds.meta_data,'time')) && all(diff(ds.meta_data.time))~=0
         x = ds.meta_data.time-24*3600*(ds.meta_data.time_start_mld-ds.meta_data.time_coverage_start_mld);
         xl = sprintf('Seconds from %s',datestr(ds.meta_data.time_start_mld,'yyyy-mm-ddTHH:MM:SSZ'));
@@ -30,7 +36,7 @@ classdef bscan_plot
         flip = 0;
       end
       
-      h = bscan_plot.plot(x,ds.meta_data.range,ds.moments.(fld).','ax',ax,'flip',flip);
+      h = bscan_plot.plot(x,ds.meta_data.range,ds.moments.(fld).','ax',ax,'flip',flip,'bar_units',bar_units);
       xlabel(xl);
       ylabel('range (KM)');
     end
@@ -76,6 +82,7 @@ classdef bscan_plot
       ax = [];
       fix_coords = 1;
       flip = 0;
+      bar_units='';
       
       paramparse(varargin);
 
@@ -87,7 +94,9 @@ classdef bscan_plot
       
       [x,y]=meshgrid(x,y);
       h = surfmat(x,y,fld,{'fix_coords',fix_coords,'no_colorbar',1});
-      colorbar('East','YAxisLocation','right');
+      %colorbar('East','YAxisLocation','right');
+      hcb=colorbar;
+      set(get(hcb,'Title'),'String',bar_units);
       if flip
         set(gca,'YDir','reverse');
       end
