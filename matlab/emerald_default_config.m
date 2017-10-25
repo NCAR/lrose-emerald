@@ -28,9 +28,9 @@ default_plot = 'PPI (XY)';
 % go back to the default zoom from the plotting routine
 zoom_lock = 1;
 
-% If 1, then when the user switches datasets, the plots will maintain the same zoom.  Otherwise, it will
-% go back to the default zoom from the plotting routine
-caxis_lock = 1;
+% Vector of 0 or 1 corresponding to the figure panels. If 1, then when the user switches datasets, the plots will maintain the same color scale.  Otherwise, it will
+% go back to the default color scale from the plotting routine.
+caxis_lock = [1,1,1,1];
 
 % Main Plot Window Size
 plot_window.position = [   56 66 1007 814]; % pixels

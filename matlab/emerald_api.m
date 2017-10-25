@@ -328,9 +328,18 @@ classdef emerald_api < handle
       uimenu(ploth,'Label','Select Plots','Callback',@(x,y) obj.plot_window_pick_plots);
       uimenu(ploth,'Label','Render Plots','Callback',@(x,y) obj.render_plots);
       uimenu(ploth,'Label','Zoom Lock','Callback',@(x,y) obj.zoom_lock,'Separator','on','Checked',obj.tf2onoff(obj.params.zoom_lock));
-      uimenu(ploth,'Label','Color Axis Lock','Callback',@(x,y) obj.caxis_lock,'Checked',obj.tf2onoff(obj.params.caxis_lock));
+      %uimenu(ploth,'Label','Color Axis Lock','Callback',@(x,y) obj.caxis_lock,'Checked',obj.tf2onoff(obj.params.caxis_lock));
+      subploth=uimenu(ploth,'Label','Color Axis Lock');
       uimenu(ploth,'Label','Data Info Fields','Callback',@(x,y) obj.update_datainfo,'Separator','on');
       
+      if length(obj.params.caxis_lock)~=obj.params.plot_panels
+          obj.params.caxis_lock=cat(2,reshape(obj.params.caxis_lock,1,[]),ones(1,obj.params.plot_panels-length(obj.params.caxis_lock)));
+      end
+          
+      for ii=1:obj.params.plot_panels
+          uimenu(subploth,'Label',['Panel ' num2str(ii)],'Callback',@(x,y) obj.caxis_lock(ii),...
+              'Checked',obj.tf2onoff(obj.params.caxis_lock(ii)));
+      end
       
       plotp = uimenu(fig,'Label','Polygon');
       %uimenu(plotp,'Label','Polygon Mode On','callback',@(x,y) obj.plot_window_polygon_mode);
@@ -504,6 +513,7 @@ classdef emerald_api < handle
       set(ah,'Nextplot','replace');
       for ll = 1:obj.params.plot_panels
         h = ah(ll);
+        moment_orig=h.Title.String; %original variable displayed in panel
         plot_info = obj.params.available_plots(plots(ll).plot_type);
         if ~isequal(plot_info.name,'NONE')
           try 
@@ -520,7 +530,7 @@ classdef emerald_api < handle
             if obj.params.zoom_lock && ~isempty(plots(ll).last_zoom)
               axis(h,plots(ll).last_zoom);
             end
-            if obj.params.caxis_lock && ~isempty(plots(ll).caxis)
+            if obj.params.caxis_lock(ll) && ~isempty(plots(ll).caxis) && strcmp(plots(ll).moment_field,moment_orig)
               caxis(h,plots(ll).caxis);
             end
           catch ME
@@ -591,10 +601,11 @@ classdef emerald_api < handle
     end
    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %% zoom_lock
-    function caxis_lock(obj)
-      obj.params.caxis_lock = ~obj.params.caxis_lock;
-      set(findobj(obj.fig,'Type','uimenu','Label','Color Axis Lock'),'Checked',obj.tf2onoff(obj.params.caxis_lock));
+    %% caxis_lock
+    function caxis_lock(obj,ii)
+      obj.params.caxis_lock(ii) = ~obj.params.caxis_lock(ii);
+      set(findobj(obj.fig,'Type','uimenu','Label',['Panel ' num2str(ii)]),...
+          'Checked',obj.tf2onoff(obj.params.caxis_lock(ii)));
     end
     
     
