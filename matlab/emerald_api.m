@@ -355,6 +355,22 @@ classdef emerald_api < handle
       ploth = uimenu(fig,'Label','Help');
       uimenu(ploth,'Label','About','Callback',@(x,y) obj.about);
       
+      % Add buttons to step through buffer
+      hToolbar = findall(fig,'tag','FigureToolBar');
+      % Load arrow icon
+      icon = fullfile(matlabroot,'/toolbox/matlab/icons/greenarrowicon.gif');
+      [cdata,map] = imread(icon);
+      % Convert white pixels into a transparent background
+      map(find(map(:,1)+map(:,2)+map(:,3)==3)) = NaN;
+      % Convert into 3D RGB-space
+      cdataStepForward = ind2rgb(cdata,map);
+      cdataStepBack = cdataStepForward(:,[16:-1:1],:);
+      
+      % Add the icons to toolbar
+      hPrev = uipushtool(hToolbar,'cdata',cdataStepBack, 'tooltip','Previous file', 'ClickedCallback',@(x,y) obj.prev_in_buffer);
+      hNext = uipushtool(hToolbar,'cdata',cdataStepForward, 'tooltip','Next file', 'ClickedCallback',@(x,y) obj.next_in_buffer);
+      set(hPrev,'Separator','on');
+      
       % modify the data cursor so that it only returns x and y
       h = datacursormode(fig);
       h.UpdateFcn = @(x,y) obj.default_datacursor_text(x,y);
@@ -1140,7 +1156,28 @@ classdef emerald_api < handle
       fprintf('%s',repr(d.moments,'prefix','current_dataset_moments','max_array_size',100));
     end
     
-   %% plot_default_plots
+    %% prev_in_buffer
+    function prev_in_buffer(obj)
+        if obj.current_dataset>1
+            obj.current_dataset=obj.current_dataset-1;
+            obj.render_plots;
+        else
+            disp('First data set in buffer');
+        end
+    end
+    
+    %% next_in_buffer
+    function next_in_buffer(obj)
+        s = emerald_databuffer.databuffer_inventory_string;
+        s = regexp(s,sprintf('\n'),'split');
+        if obj.current_dataset<length(s)-2
+            obj.current_dataset=obj.current_dataset+1;
+            obj.render_plots;
+        else
+            disp('Last data set in buffer');
+        end
+    end
+    %% plot_default_plots
    function plot_default_plots(obj)
        % Creates default plots when first selecting a data set
        [res,msg] = obj.check_plot_window;
