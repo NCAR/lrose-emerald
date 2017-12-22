@@ -499,7 +499,12 @@ classdef emerald_api < handle
     %% render_plots
     function render_plots(obj)
     % Render the plots
-      
+    
+    %Set mouse pointer to hour glass
+    oldpointer = get(obj.fig, 'pointer');
+    set(obj.fig, 'pointer', 'watch')
+    drawnow;
+    
       [res,msg] = obj.check_plot_window('check_axes',1);
       if res
         %obj.params.error_function(sprintf('ERROR: %s',msg'));
@@ -587,6 +592,8 @@ classdef emerald_api < handle
         obj.redraw_polygon;
       end
       
+      %set mouse pointer back
+      set(obj.fig, 'pointer', oldpointer)
     end
     
     %%%%%
@@ -978,7 +985,7 @@ classdef emerald_api < handle
       buffer_empty=emerald_databuffer.databuffer_length==0;
       
       h = obj.msgbox(sprintf('\nPlease wait\nLoading....'));
-      obj.fetch_by_filename_sweep(files,'all_fields','sweep_index',inf);
+      obj.fetch_by_filename_sweep(files,'all_fields','sweep_index',inf,'default_plot',obj.params.default_plot);
       close(h);
       drawnow;
       
@@ -1032,7 +1039,7 @@ classdef emerald_api < handle
       buffer_empty=emerald_databuffer.databuffer_length==0;
       
       h = obj.msgbox(sprintf('\nPlease wait\nLoading....'));
-      obj.fetch_by_filename_sweep(files,moment_fields(selection),'sweep_number',sweep_numbers);
+      obj.fetch_by_filename_sweep(files,moment_fields(selection),'sweep_number',sweep_numbers,'default_plot',obj.params.default_plot);
       close(h);
       drawnow;
       

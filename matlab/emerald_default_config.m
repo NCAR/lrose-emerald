@@ -19,7 +19,8 @@ available_plots(end+1) = emerald_utils.plot_struct('name','PPI (XY)','call',@ppi
 available_plots(end+1) = emerald_utils.plot_struct('name','PPI (XY,Elev Corr)','call',@ppi_plot.call,'options',{'mode','polar_elcorr'},'xy2ind',@ppi_plot.xy2ind);
 available_plots(end+1) = emerald_utils.plot_struct('name','PPI (lonlat)','call',@ppi_plot.call,'options',{'mode','lonlat'},'xy2ind',@ppi_plot.xy2ind);
 available_plots(end+1) = emerald_utils.plot_struct('name','RHI','call',@rhi_plot.call,'xy2ind',@rhi_plot.xy2ind);
-available_plots(end+1) = emerald_utils.plot_struct('name','BSCAN','call',@bscan_plot.call,'xy2ind',@bscan_plot.xy2ind);
+available_plots(end+1) = emerald_utils.plot_struct('name','BSCAN (range)','call',@bscan_plot.call,'options',{'mode','range'},'xy2ind',@bscan_plot.xy2ind);
+available_plots(end+1) = emerald_utils.plot_struct('name','BSCAN (altitude)','call',@bscan_plot.call,'options',{'mode','altitude'},'xy2ind',@bscan_plot.xy2ind);
 
 % default plot to use.  Must match the name of one of the available plots.
 default_plot = 'PPI (XY)';

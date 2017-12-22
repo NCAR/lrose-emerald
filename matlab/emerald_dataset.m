@@ -102,6 +102,8 @@ classdef emerald_dataset
       moments_fields = {};
       vary_n_gates = [];
       convert_coords = 1;
+      
+      default_plot = 'PPI (XY)';
      
       paramparse(varargin);
 
@@ -145,7 +147,7 @@ classdef emerald_dataset
       new_data = emerald_dataset.netcdf2emerald(data,'sweep_index',sweep_index,...
                                                 'sweep_number',sweep_number,'append_to',append_to,...
                                                 'meta_data_fields',meta_data_fields,'moments_fields',vars,...
-                                                'vary_n_gates',vary_n_gates,'convert_coords',convert_coords);
+                                                'vary_n_gates',vary_n_gates,'convert_coords',convert_coords,'default_plot',default_plot);
       
       if do_check
         [result,msg] = emerald_dataset.check_dataset(new_data);
@@ -474,6 +476,7 @@ classdef emerald_dataset
       moments_fields = {};
       vary_n_gates = [];
       convert_coords = 1;
+      default_plot = 'PPI (XY)';
       
       paramparse(varargin);
 
@@ -508,6 +511,13 @@ classdef emerald_dataset
           end
           sweep_index(ll) = find(inds);
         end        
+      end
+      
+      %for BSCAN mode, make sure there is only one sweep
+      if strcmp(default_plot,'BSCAN (range)') | strcmp(default_plot,'BSCAN (altitude)')
+          data.vars.sweep_number.data=0;
+          data.vars.sweep_start_ray_index.data=0;
+          data.vars.sweep_end_ray_index.data=data.dims.time.data-1;
       end
       
       % if the sweep_index is inf, then just get all the sweeps.

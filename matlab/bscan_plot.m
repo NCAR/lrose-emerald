@@ -9,12 +9,22 @@ classdef bscan_plot
   methods (Static = true)
 
     function h = call(em,fld,ax,varargin)
-      dataset = em.current_dataset;
+      %dataset = em.current_dataset;
       options = {};
       
       paramparse(varargin);
-
+      
+      mode = 'altitude'; % can be 'altitude', or 'range'
+      
+      paramparse(options,'mode');
+      
       ds = em.get_current_dataset;
+      
+      %In altitude mode, check if altitude data has been calculated
+      if strcmp(mode,'altitude') & ~isfield(ds.meta_data,'alt')
+          mode = 'range';
+          disp('Altitude data does not exist. Switching to "range" mode.');
+      end
       
       try
           bar_units=ds.moments_info.(fld).atts.units.data;
@@ -30,15 +40,38 @@ classdef bscan_plot
         xl = 'beam index';
       end
       
-      if nan_mean(ds.meta_data.elevation)<-20
-        flip = 1;
-      else
-        flip = 0;
+      flip = 0;
+      
+      switch mode
+          case 'range'
+              Y = ds.meta_data.range;
+              [X,Y]=meshgrid(x,ds.meta_data.range);
+              if nan_mean(ds.meta_data.elevation)<-20
+                  flip = 1;
+              end
+          case 'altitude'
+              Y = ds.meta_data.alt';
+              X = repmat(x,1,size(Y,1))';
+              
+%               if size(X)~=size(ds.moments.(fld))
+%                   X=X'
+%               end
+%               
+%               if size(Y)~=size(ds.moments.(fld))
+%                   Y=Y'
+%               end
       end
       
-      h = bscan_plot.plot(x,ds.meta_data.range,ds.moments.(fld).','ax',ax,'flip',flip,'bar_units',bar_units);
+      h = bscan_plot.plot(X,Y,ds.moments.(fld).','ax',ax,'flip',flip,'bar_units',bar_units);
       xlabel(xl);
-      ylabel('range (KM)');
+      
+      switch mode
+          case 'range'
+              ylabel('range (KM)');
+          case 'altitude'
+              ylabel('alt (KM)');
+              ylim([-1,8]);
+      end
     end
     
     % function bdf(obj,event_obj,em,fld,mode)
@@ -92,11 +125,12 @@ classdef bscan_plot
         set(fig,'CurrentAxes',ax);
       end
       
-      [x,y]=meshgrid(x,y);
+      %[x,y]=meshgrid(x,y);
       h = surfmat(x,y,fld,{'fix_coords',fix_coords,'no_colorbar',1});
       %colorbar('East','YAxisLocation','right');
       hcb=colorbar;
       set(get(hcb,'Title'),'String',bar_units);
+            
       if flip
         set(gca,'YDir','reverse');
       end
