@@ -38,7 +38,7 @@ function [lats,lons,alts] = xyz_to_latlonalt(olat,olon,oalt,x,y,z)
   olat = olat * pi/180;
   olon = olon * pi/180;
   
-  % modify sizes of olat, olon, oalt if necessary
+  % modify sizes of olat, olon, and oalt if necessary
   if numel(olat)>1 && ~isequal(size(x),size(olat))
       % check if olat is vector of right size
       if min(size(olat)) == 1 && ismember(length(olat),size(x))
