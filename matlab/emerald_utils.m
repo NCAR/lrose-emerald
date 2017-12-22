@@ -49,6 +49,7 @@ classdef emerald_utils
       [elevs,rs] = ndgrid(elev,r);
       % needed to put 0 for OALT since it would be counted twice
       [x_corr,y_corr,z] = radar_razelev_to_xyz(0,rs,thetas,elevs);
+      
       reshape(radar_location,[],3);
       [lat,lon,alt] = xyz_to_latlonalt(radar_location(:,1),radar_location(:,2),radar_location(:,3),x_corr,y_corr,z);
       if nargout>3
