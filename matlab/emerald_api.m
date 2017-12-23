@@ -332,6 +332,7 @@ classdef emerald_api < handle
       subploth=uimenu(ploth,'Label','Color Axis Lock');
       uimenu(ploth,'Label','Data Info Fields','Callback',@(x,y) obj.update_datainfo,'Separator','on');
       
+      % add submenu for color axis lock
       if length(obj.params.caxis_lock)~=obj.params.plot_panels
           obj.params.caxis_lock=cat(2,reshape(obj.params.caxis_lock,1,[]),ones(1,obj.params.plot_panels-length(obj.params.caxis_lock)));
       end

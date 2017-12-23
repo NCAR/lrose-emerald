@@ -39,6 +39,7 @@ function em = emerald(varargin)
 
 
 % $Revision: 1.2 $
+addpath('./colormaps');
 
 em = emerald_api(varargin{:});
 em.plot_window_create;

@@ -93,6 +93,45 @@ classdef emerald_utils
       ralt = ralt(inds);
     end
     
+    %add colorbar based on input field
+    function add_colorbar(bar_units,fld)
+        hcb=colorbar;
+      set(get(hcb,'Title'),'String',bar_units);
+
+      % default colorbar
+      if strcmp(fld,'DBZ') || strcmp(fld,'DBZHC') || strcmp(fld,'DBZVC')
+          colormap(gca,dbz_default);
+          caxis([-46 26]);
+          set(hcb,'YTick',[-43:3:23]);
+      elseif strcmp(fld,'DBMVC') || strcmp(fld,'DBMHC') || strcmp(fld,'DBMHX') || strcmp(fld,'DBMVX')
+          colormap(gca,dbm_default);
+          caxis([-117 -15]);
+          set(hcb,'YTick',[-111:6:-21]);
+      elseif strcmp(fld,'LDR') || strcmp(fld,'LDRH') || strcmp(fld,'LDRV')
+          colormap(gca,ldr_default);
+          caxis([-50 65]);
+          set(hcb,'YTick',[-45:5:60]);
+      elseif strcmp(fld,'NCP')
+          colormap(gca,ncp_default);
+          caxis([-0.1 1.1]);
+          set(hcb,'YTick',[-0.05:0.05:1]);
+      elseif strcmp(fld,'SNR') || strcmp(fld,'SNRHC') || strcmp(fld,'SNRVC') || strcmp(fld,'SNRHX') || strcmp(fld,'SNRVX')
+          colormap(gca,snr_default);
+          caxis([-10 21]);
+          set(hcb,'YTick',[-9:1:20]);
+      elseif strcmp(fld,'VEL') || strcmp(fld,'VEL_RAW')
+          colormap(gca,vel_default);
+          caxis([-4 4]);
+          set(hcb,'YTick',[-3.5:0.5:3.5]);
+      elseif strcmp(fld,'WIDTH')
+          colormap(gca,width_default);
+          caxis([0 4.25]);
+          set(hcb,'YTick',[0.25:0.25:4]);
+      else
+          colormap(gca,parula(24));
+      end
+    end
+    
   end
   
 end
