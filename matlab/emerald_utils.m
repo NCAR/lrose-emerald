@@ -81,10 +81,10 @@ classdef emerald_utils
     function [rlat,rlon,ralt] = get_platform_midloc(rlat,rlon,ralt)
       inds = find(~isnan(rlat) & ~isnan(rlon) & ~isnan(ralt));
       if length(inds) == 0
-        rlat = NaN;
-        rlon = NaN;
-        ralt = NaN;
-        return
+          rlat = NaN;
+          rlon = NaN;
+          ralt = NaN;
+          return
       end
       [~,indind] = min(abs(inds)-(length(rlat)+1)/2);
       inds = inds(indind);
@@ -93,43 +93,54 @@ classdef emerald_utils
       ralt = ralt(inds);
     end
     
+    
     %add colorbar based on input field
-    function add_colorbar(bar_units,fld)
-        hcb=colorbar;
-      set(get(hcb,'Title'),'String',bar_units);
-
-      % default colorbar
-      if strcmp(fld,'DBZ') || strcmp(fld,'DBZHC') || strcmp(fld,'DBZVC')
-          colormap(gca,dbz_default);
-          caxis([-46 26]);
-          set(hcb,'YTick',[-43:3:23]);
-      elseif strcmp(fld,'DBMVC') || strcmp(fld,'DBMHC') || strcmp(fld,'DBMHX') || strcmp(fld,'DBMVX')
-          colormap(gca,dbm_default);
-          caxis([-117 -15]);
-          set(hcb,'YTick',[-111:6:-21]);
-      elseif strcmp(fld,'LDR') || strcmp(fld,'LDRH') || strcmp(fld,'LDRV')
-          colormap(gca,ldr_default);
-          caxis([-50 65]);
-          set(hcb,'YTick',[-45:5:60]);
-      elseif strcmp(fld,'NCP')
-          colormap(gca,ncp_default);
-          caxis([-0.1 1.1]);
-          set(hcb,'YTick',[-0.05:0.05:1]);
-      elseif strcmp(fld,'SNR') || strcmp(fld,'SNRHC') || strcmp(fld,'SNRVC') || strcmp(fld,'SNRHX') || strcmp(fld,'SNRVX')
-          colormap(gca,snr_default);
-          caxis([-10 21]);
-          set(hcb,'YTick',[-9:1:20]);
-      elseif strcmp(fld,'VEL') || strcmp(fld,'VEL_RAW')
-          colormap(gca,vel_default);
-          caxis([-4 4]);
-          set(hcb,'YTick',[-3.5:0.5:3.5]);
-      elseif strcmp(fld,'WIDTH')
-          colormap(gca,width_default);
-          caxis([0 4.25]);
-          set(hcb,'YTick',[0.25:0.25:4]);
-      else
-          colormap(gca,parula(24));
-      end
+    function cax_par=find_caxis_params(fld,axlim,colmap)
+         %if strcmp(fld,'DBZ') || strcmp(fld,'DBZHC') || strcmp(fld,'DBZVC') || strcmp(fld,'DBZ')
+         if ~isempty(strfind(fld,'DBZ'))
+            cax_par.color_map=colmap.dbz;
+            cax_par.limits=axlim.dbz;
+        elseif ~isempty(strfind(fld,'DBM'))
+            cax_par.color_map=colmap.dbm;
+            cax_par.limits=axlim.dbm;
+        elseif ~isempty(strfind(fld,'LDR'))
+            cax_par.color_map=colmap.ldr;
+            cax_par.limits=axlim.ldr;
+        elseif ~isempty(strfind(fld,'NCP'))
+            cax_par.color_map=colmap.ncp;
+            cax_par.limits=axlim.ncp;
+        elseif ~isempty(strfind(fld,'SNR'))
+            cax_par.color_map=colmap.snr;
+            cax_par.limits=axlim.snr;
+         elseif ~isempty(strfind(fld,'VEL'))
+             cax_par.color_map=colmap.vel;
+             cax_par.limits=axlim.vel;
+         elseif ~isempty(strfind(fld,'WIDTH'))
+             cax_par.color_map=colmap.width;
+             cax_par.limits=axlim.width;
+         elseif ~isempty(strfind(fld,'ZDR'))
+             cax_par.color_map=colmap.zdr;
+             cax_par.limits=axlim.zdr;
+         elseif ~isempty(strfind(fld,'RHOHV'))
+             cax_par.color_map=colmap.rhohv;
+             cax_par.limits=axlim.rhohv;
+         elseif ~isempty(strfind(fld,'PHIDP'))
+             cax_par.color_map=colmap.phidp;
+             cax_par.limits=axlim.phidp;
+         else
+             cax_par.color_map=colormap(parula(24));
+        end
+        if isempty(cax_par.color_map)
+            cax_par.color_map=colormap(parula(24));
+        end
+        col_length=size(cax_par.color_map,1);
+        try
+            spacing=(cax_par.limits(2)-cax_par.limits(1))/(col_length);
+            cax_par.yticks=[(cax_par.limits(1)+spacing):spacing:(cax_par.limits(2)-spacing)];
+            while length(cax_par.yticks)>16
+                cax_par.yticks=cax_par.yticks(1:2:end);
+            end
+        end
     end
     
   end

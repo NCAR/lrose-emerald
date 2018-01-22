@@ -8,8 +8,10 @@ classdef rhi_plot
 % $Revision: 1.1 $
   methods (Static = true)
 
-    function h = call(em,fld,ax,varargin)
+    function h = call(em,fld_in,ax,varargin)
       options = {};
+      
+      fld=fld_in.moment_field;
       
       paramparse(varargin);
 
@@ -37,8 +39,20 @@ classdef rhi_plot
       radar_location = [0 0 ralt];
       
       h = rhi_plot.plot(S,Z,ds.moments.(fld),'ax',ax,'az',median(ds.meta_data.azimuth),...
-          'alt',ds.meta_data.alt,'radar_location',radar_location,options{:},'bar_units',bar_units);
+          'alt',ds.meta_data.alt,'radar_location',radar_location,options{:});
       
+      hcb=colorbar;
+      set(get(hcb,'Title'),'String',bar_units);
+      try
+          colormap(gca,fld_in.caxis_params.color_map);
+      end
+      try
+          caxis(fld_in.caxis_params.limits);
+      end
+      try
+          set(hcb,'YTick',fld_in.caxis_params.yticks);
+      end
+     
     end
     
     function ind = xy2ind(plot_obj,pos,options)
@@ -57,8 +71,7 @@ classdef rhi_plot
       fix_coords = 1;
       contour_field = [];
       contour_vals = [];
-      bar_units='';
-
+      
       % grid info
       %range_rings = 50:50:450;
       %elev_spokes = 0:30:359;
@@ -90,9 +103,7 @@ classdef rhi_plot
       end
 
       h = surfmat(S,Z,fld,{'fix_coords',fix_coords,'no_colorbar',1});
-      %colorbar('East','YAxisLocation','right');
-      hcb=colorbar;
-      set(get(hcb,'Title'),'String',bar_units);
+      
       hold on
       if ~isempty(contour_field)
         if ~isequal(size(contour_field),size(fld))

@@ -8,8 +8,10 @@ classdef ppi_plot
 % $Revision: 1.5 $
   methods (Static = true)
 
-    function h = call(em,fld,ax,varargin)
+    function h = call(em,fld_in,ax,varargin)
       options = {};
+      
+      fld=fld_in.moment_field;
       
       paramparse(varargin);
 
@@ -40,8 +42,20 @@ classdef ppi_plot
           radar_location = [rlat rlon ralt];
       end          
       h = ppi_plot.plot(X,Y,ds.moments.(fld),'ax',ax,'elev',median(ds.meta_data.elevation),...
-          'alt',ds.meta_data.alt,'radar_location',radar_location,options{:},'bar_units',bar_units);
+          'alt',ds.meta_data.alt,'radar_location',radar_location,options{:});
       
+      hcb=colorbar;
+      set(get(hcb,'Title'),'String',bar_units);
+      try
+          colormap(gca,fld_in.caxis_params.color_map);
+      end
+      try
+          caxis(fld_in.caxis_params.limits);
+      end
+      try
+          set(hcb,'YTick',fld_in.caxis_params.yticks);
+      end
+  
     end
     
     % function bdf(obj,event_obj,em,fld,mode)
@@ -88,8 +102,7 @@ classdef ppi_plot
       fix_coords = 1;
       contour_field = [];
       contour_vals = [];
-      bar_units='';
-
+     
       % grid info
       range_rings = 50:50:450;
       az_spokes = 0:30:359;
@@ -143,9 +156,7 @@ classdef ppi_plot
       end
 
       h = surfmat(x,y,fld,{'fix_coords',fix_coords,'no_colorbar',1});
-      %colorbar('East','YAxisLocation','right');
-      hcb=colorbar;
-      set(get(hcb,'Title'),'String',bar_units)
+      
       maxalt = max(alt(:))+1;
       hold on
       if ~isempty(contour_field)

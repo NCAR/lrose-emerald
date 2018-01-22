@@ -2,7 +2,6 @@ classdef emerald_api < handle
 % This class contains the API for the GUI part of emerald.  It makes use of the
 % emerald_databuffer and emerald_dataset classes, along with plots.  Most users
 % will just use the GUI directly by calling emerald
-
 % % % ** Copyright (c) 2015, University Corporation for Atmospheric Research
 % % % ** (UCAR), Boulder, Colorado, USA.  All rights reserved. 
 
@@ -368,8 +367,8 @@ classdef emerald_api < handle
       cdataStepBack = cdataStepForward(:,[16:-1:1],:);
       
       % Add the icons to toolbar
-      hPrev = uipushtool(hToolbar,'cdata',cdataStepBack, 'tooltip','Previous file', 'ClickedCallback',@(x,y) obj.prev_in_buffer);
-      hNext = uipushtool(hToolbar,'cdata',cdataStepForward, 'tooltip','Next file', 'ClickedCallback',@(x,y) obj.next_in_buffer);
+      hPrev = uipushtool(hToolbar,'cdata',cdataStepBack,'Enable','off', 'tooltip','Previous file', 'ClickedCallback',@(x,y) obj.prev_in_buffer);
+      hNext = uipushtool(hToolbar,'cdata',cdataStepForward,'Enable','off', 'tooltip','Next file', 'ClickedCallback',@(x,y) obj.next_in_buffer);
       set(hPrev,'Separator','on');
       
       % modify the data cursor so that it only returns x and y
@@ -469,7 +468,7 @@ classdef emerald_api < handle
     %%%%%%%%
     %% default_plot_state_struct
     function out = default_plot_state_struct(obj,varargin)
-      out = struct('moment_field','','plot_type',{1},'original_zoom',{});
+      out = struct('moment_field','','plot_type',{1},'original_zoom',{},'caxis_params',{});
       out = paramparses(out,varargin);
     end
       
@@ -485,6 +484,7 @@ classdef emerald_api < handle
       % run through the controls, pulling out the appropriate plot for each and setting the plots
       for ll = 1:obj.params.plot_panels
         plots(ll).moment_field = moments{get(uihs((ll-1)*2+1),'Value')};
+        plots(ll).caxis_params = emerald_utils.find_caxis_params(plots(ll).moment_field,obj.params.caxis_limits,obj.params.color_map);
         plots(ll).plot_type = get(uihs((ll-1)*2+2),'Value');
         if length(old_plots)>=ll && old_plots(ll).plot_type~=plots(ll).plot_type
           cla(ah(ll));
@@ -546,14 +546,14 @@ classdef emerald_api < handle
               plots(ll).last_zoom = [];
               plots(ll).caxis = [];
             end
-            plot_info.call(obj,plots(ll).moment_field,h,'options',plot_info.options);
+            if obj.params.caxis_lock(ll) && ~isempty(plots(ll).caxis) && strcmp(plots(ll).moment_field,moment_orig)
+              plots(ll).caxis_params.limits=plots(ll).caxis;
+            end
+            plot_info.call(obj,plots(ll),h,'options',plot_info.options);
             title(plots(ll).moment_field,'Interpreter','none')
             plots(ll).original_zoom = axis;
             if obj.params.zoom_lock && ~isempty(plots(ll).last_zoom)
               axis(h,plots(ll).last_zoom);
-            end
-            if obj.params.caxis_lock(ll) && ~isempty(plots(ll).caxis) && strcmp(plots(ll).moment_field,moment_orig)
-              caxis(h,plots(ll).caxis);
             end
           catch ME
             cla(h);
@@ -590,7 +590,23 @@ classdef emerald_api < handle
       set(h,'string',sprintf('(%i) %s',obj.current_dataset,s));
       
       if ~isempty(obj.polygon_list)
-        obj.redraw_polygon;
+          obj.redraw_polygon;
+      end
+      
+      % check if figure toolbar push buttens need to be updated
+      s = emerald_databuffer.databuffer_inventory_string;
+      s = regexp(s,sprintf('\n'),'split');
+      hPrev = findall(obj.fig, 'tooltipstring', 'Previous file');
+      hNext = findall(obj.fig, 'tooltipstring', 'Next file');
+      set(hPrev,'Enable','on')
+      set(hNext,'Enable','on')
+      % first file
+      if obj.current_dataset==1
+          set(hPrev,'Enable','off')
+      end
+      % last file
+      if obj.current_dataset==length(s)-2
+          set(hNext,'Enable','off')
       end
       
       %set mouse pointer back
@@ -1166,32 +1182,22 @@ classdef emerald_api < handle
     
     %% prev_in_buffer
     function prev_in_buffer(obj)
-        if obj.current_dataset>1
-            obj.current_dataset=obj.current_dataset-1;
-            obj.render_plots;
-        else
-            disp('First data set in buffer');
-        end
+        obj.current_dataset=obj.current_dataset-1;
+        obj.render_plots;
     end
     
     %% next_in_buffer
     function next_in_buffer(obj)
-        s = emerald_databuffer.databuffer_inventory_string;
-        s = regexp(s,sprintf('\n'),'split');
-        if obj.current_dataset<length(s)-2
-            obj.current_dataset=obj.current_dataset+1;
-            obj.render_plots;
-        else
-            disp('Last data set in buffer');
-        end
+        obj.current_dataset=obj.current_dataset+1;
+        obj.render_plots;
     end
     %% plot_default_plots
-   function plot_default_plots(obj)
-       % Creates default plots when first selecting a data set
-       [res,msg] = obj.check_plot_window;
-       if res
-           obj.params.error_function(sprintf('ERROR: %s',msg));
-           return
+    function plot_default_plots(obj)
+        % Creates default plots when first selecting a data set
+        [res,msg] = obj.check_plot_window;
+        if res
+            obj.params.error_function(sprintf('ERROR: %s',msg));
+            return
        end
        
        ds = obj.get_current_dataset;
@@ -1212,6 +1218,7 @@ classdef emerald_api < handle
                plots(ll).moment_field = moments{ll};
            end
            plots(ll).plot_type = plot_default(1);
+           plots(ll).caxis_params = emerald_utils.find_caxis_params(plots(ll).moment_field,obj.params.caxis_limits,obj.params.color_map);
            if length(old_plots)>=ll && old_plots(ll).plot_type~=plots(ll).plot_type
                cla(ah(ll));
            end

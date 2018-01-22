@@ -8,9 +8,11 @@ classdef bscan_plot
 % $Revision: 1.7 $
   methods (Static = true)
 
-    function h = call(em,fld,ax,varargin)
+    function h = call(em,fld_in,ax,varargin)
       %dataset = em.current_dataset;
       options = {};
+      
+      fld=fld_in.moment_field;
       
       paramparse(varargin);
       
@@ -65,7 +67,17 @@ classdef bscan_plot
               ylim([-1,8]);
       end
       
-      emerald_utils.add_colorbar(bar_units,fld);
+      hcb=colorbar;
+      set(get(hcb,'Title'),'String',bar_units);
+      try
+          colormap(gca,fld_in.caxis_params.color_map);
+      end
+      try
+          caxis(fld_in.caxis_params.limits);
+      end
+      try
+          set(hcb,'YTick',fld_in.caxis_params.yticks);
+      end
     end
     
     % function bdf(obj,event_obj,em,fld,mode)
