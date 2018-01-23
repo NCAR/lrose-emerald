@@ -94,9 +94,8 @@ classdef emerald_utils
     end
     
     
-    %add colorbar based on input field
+    % find color map based on input field
     function cax_par=find_caxis_params(fld,axlim,colmap)
-         %if strcmp(fld,'DBZ') || strcmp(fld,'DBZHC') || strcmp(fld,'DBZVC') || strcmp(fld,'DBZ')
          if ~isempty(strfind(fld,'DBZ'))
             cax_par.color_map=colmap.dbz;
             cax_par.limits=axlim.dbz;
@@ -127,20 +126,83 @@ classdef emerald_utils
          elseif ~isempty(strfind(fld,'PHIDP'))
              cax_par.color_map=colmap.phidp;
              cax_par.limits=axlim.phidp;
+         elseif ~isempty(strfind(fld,'temp'))
+             cax_par.color_map=colmap.temp;
+             cax_par.limits=axlim.temp;
+         elseif ~isempty(strfind(fld,'backscat'))
+             cax_par.color_map=colmap.backscat;
+             cax_par.limits=axlim.backscat;
+         elseif ~isempty(strfind(fld,'depol'))
+             cax_par.color_map=colmap.depol;
+             cax_par.limits=axlim.depol;
+         elseif ~isempty(strfind(fld,'od'))
+             cax_par.color_map=colmap.od;
+             cax_par.limits=axlim.od;
+         elseif ~isempty(strfind(fld,'extinction'))
+             cax_par.color_map=colmap.ext;
+             cax_par.limits=axlim.ext;
          else
              cax_par.color_map=colormap(parula(24));
-        end
+         end
+        
+         % use default
         if isempty(cax_par.color_map)
             cax_par.color_map=colormap(parula(24));
         end
-        col_length=size(cax_par.color_map,1);
-        try
-            spacing=(cax_par.limits(2)-cax_par.limits(1))/(col_length);
-            cax_par.yticks=[(cax_par.limits(1)+spacing):spacing:(cax_par.limits(2)-spacing)];
-            while length(cax_par.yticks)>16
-                cax_par.yticks=cax_par.yticks(1:2:end);
+    end
+    
+    % adjust color map and add color bar to figures based on user input
+    function adjust_colors(fld,ax_params,h,bar_units)
+        if ~isfield(ax_params,'limits')
+            hcb=colorbar;
+            set(get(hcb,'Title'),'String',bar_units);
+            colormap(gca,ax_params.color_map);
+        elseif isempty(ax_params.limits)
+            hcb=colorbar;
+            set(get(hcb,'Title'),'String',bar_units);
+            colormap(gca,ax_params.color_map);
+        elseif length(ax_params.limits)==2
+            hcb=colorbar;
+            set(get(hcb,'Title'),'String',bar_units);
+            colormap(gca,ax_params.color_map);
+            caxis(ax_params.limits);
+            col_length=size(ax_params.color_map,1);
+            spacing=(ax_params.limits(2)-ax_params.limits(1))/(col_length);
+            caxis_yticks=[(ax_params.limits(1)+spacing):spacing:(ax_params.limits(2)-spacing)];
+            while length(caxis_yticks)>16
+                caxis_yticks=caxis_yticks(1:2:end);
             end
-        end
+            set(hcb,'ytick',caxis_yticks);
+        else
+            col_def1 = nan(size(fld));
+            col_def2 = nan(size(fld));
+            col_def3 = nan(size(fld));
+            for ii=1:size(ax_params.color_map,1)
+                col_ind=find(fld>ax_params.limits(ii) & fld<=ax_params.limits(ii+1));
+                col_def1(col_ind)=ax_params.color_map(ii,1);
+                col_def2(col_ind)=ax_params.color_map(ii,2);
+                col_def3(col_ind)=ax_params.color_map(ii,3);
+            end
+            if ~isequal(size(col_def1),(size(fld)))
+                col_def=cat(3,col_def1',col_def2',col_def3');
+            else
+                col_def=cat(3,col_def1,col_def2,col_def3);
+            end
+            h.CData=col_def;
+            
+            hcb=colorbar;
+            set(get(hcb,'Title'),'String',bar_units);
+            colormap(gca,ax_params.color_map);
+            caxis([0 size(ax_params.color_map,1)]);
+            caxis_yticks=(1:1:size(ax_params.color_map,1)-1);
+            caxis_ytick_labels=num2str(ax_params.limits(2:end-1)');
+            while length(caxis_yticks)>16
+                caxis_yticks=caxis_yticks(1:2:end);
+                caxis_ytick_labels=caxis_ytick_labels((1:2:end),:);
+            end
+            set(hcb,'ytick',caxis_yticks);
+            set(hcb,'YTickLabel',caxis_ytick_labels);
+      end
     end
     
   end

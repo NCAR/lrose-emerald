@@ -44,17 +44,7 @@ classdef ppi_plot
       h = ppi_plot.plot(X,Y,ds.moments.(fld),'ax',ax,'elev',median(ds.meta_data.elevation),...
           'alt',ds.meta_data.alt,'radar_location',radar_location,options{:});
       
-      hcb=colorbar;
-      set(get(hcb,'Title'),'String',bar_units);
-      try
-          colormap(gca,fld_in.caxis_params.color_map);
-      end
-      try
-          caxis(fld_in.caxis_params.limits);
-      end
-      try
-          set(hcb,'YTick',fld_in.caxis_params.yticks);
-      end
+      emerald_utils.adjust_colors(ds.moments.(fld),fld_in.caxis_params,h,bar_units);
   
     end
     

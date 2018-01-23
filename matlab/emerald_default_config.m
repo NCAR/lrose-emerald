@@ -32,10 +32,14 @@ zoom_lock = 1;
 % Vector of 0 or 1 corresponding to the figure panels.
 % If 1, then when the user switches datasets, the plots will maintain the same color scale.
 % Otherwise, it will go back to the default color scale from the plotting routine.
-caxis_lock = [0,0,0,0];
+% caxis_lock = [0,0,0,0];
 
-% Color scale limits. Shoud be vector with two entries, e.g. [-46 26]. If
-% empty, limits will be determined automatically.
+% Color scale limits. Three possibilities:
+% 1. Empty []: Matlab will determine the axis limits
+% 2. Vector with minimum and maximum value, e.g. [0 10]
+% 3. Vector with spacing of interval. Can be regular or irregular. Needs to
+% be length(colormap)+1, e.g. [-inf 1 2 3 inf]
+% Different possibilities can be chosen for different variables.
 caxis_limits.dbz=[];
 caxis_limits.dbm=[];
 caxis_limits.ldr=[];
@@ -46,18 +50,29 @@ caxis_limits.width=[];
 caxis_limits.zdr=[];
 caxis_limits.rhohv=[];
 caxis_limits.phidp=[];
+caxis_limits.temp=[];
+caxis_limits.backscat=[];
+caxis_limits.depol=[];
+caxis_limits.od=[];
+caxis_limits.ext=[];
 
 % Color map. If empty, default matlab color map will be used.
-color_map.dbz=dbz_default;
-color_map.dbm=dbm_default;
-color_map.ldr=ldr_default;
-color_map.ncp=ncp_default;
-color_map.snr=snr_default;
-color_map.vel=vel_default;
-color_map.width=width_default;
-color_map.zdr=zdr_default;
-color_map.rhohv=rhohv_default;
-color_map.phidp=phidp_default;
+color_map.dbz=dbz_default; % 24 colors
+color_map.dbm=dbm_default; % 17 colors
+color_map.ldr=ldr_default; % 23 colors
+color_map.ncp=ncp_default; % 17 colors
+color_map.snr=snr_default; % 23 colors
+color_map.vel=vel_default; % 17 colors
+color_map.width=width_default; % 17 colors
+color_map.zdr=zdr_default; % 25 colors
+color_map.rhohv=rhohv_default; % 17 colors
+color_map.phidp=phidp_default; % 36 colors
+color_map.temp=temp_default; % 28 colors
+color_map.backscat=backscat_default; % 22 colors
+color_map.depol=depol_default; % 19 colors
+color_map.od=od_default; % 61 colors
+color_map.ext=ext_default; % 31 colors
+
 
 % Main Plot Window Size
 plot_window.position = [   56 66 1007 814]; % pixels

@@ -67,17 +67,8 @@ classdef bscan_plot
               ylim([-1,8]);
       end
       
-      hcb=colorbar;
-      set(get(hcb,'Title'),'String',bar_units);
-      try
-          colormap(gca,fld_in.caxis_params.color_map);
-      end
-      try
-          caxis(fld_in.caxis_params.limits);
-      end
-      try
-          set(hcb,'YTick',fld_in.caxis_params.yticks);
-      end
+      emerald_utils.adjust_colors(ds.moments.(fld),fld_in.caxis_params,h,bar_units);
+      
     end
     
     % function bdf(obj,event_obj,em,fld,mode)

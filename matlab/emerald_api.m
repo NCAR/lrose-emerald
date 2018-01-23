@@ -332,14 +332,14 @@ classdef emerald_api < handle
       uimenu(ploth,'Label','Data Info Fields','Callback',@(x,y) obj.update_datainfo,'Separator','on');
       
       % add submenu for color axis lock
-      if length(obj.params.caxis_lock)~=obj.params.plot_panels
-          obj.params.caxis_lock=cat(2,reshape(obj.params.caxis_lock,1,[]),ones(1,obj.params.plot_panels-length(obj.params.caxis_lock)));
-      end
+%       if length(obj.params.caxis_lock)~=obj.params.plot_panels
+%           obj.params.caxis_lock=cat(2,reshape(obj.params.caxis_lock,1,[]),ones(1,obj.params.plot_panels-length(obj.params.caxis_lock)));
+%       end
           
-      for ii=1:obj.params.plot_panels
-          uimenu(subploth,'Label',['Panel ' num2str(ii)],'Callback',@(x,y) obj.caxis_lock(ii),...
-              'Checked',obj.tf2onoff(obj.params.caxis_lock(ii)));
-      end
+%       for ii=1:obj.params.plot_panels
+%           uimenu(subploth,'Label',['Panel ' num2str(ii)],'Callback',@(x,y) obj.caxis_lock(ii),...
+%               'Checked',obj.tf2onoff(obj.params.caxis_lock(ii)));
+%       end
       
       plotp = uimenu(fig,'Label','Polygon');
       %uimenu(plotp,'Label','Polygon Mode On','callback',@(x,y) obj.plot_window_polygon_mode);
@@ -541,14 +541,14 @@ classdef emerald_api < handle
           try 
             if length(findobj(h))>1 
               plots(ll).last_zoom = axis(h);
-              plots(ll).caxis = caxis(h);
+              %plots(ll).caxis = caxis(h);
             else
               plots(ll).last_zoom = [];
-              plots(ll).caxis = [];
+              %plots(ll).caxis = [];
             end
-            if obj.params.caxis_lock(ll) && ~isempty(plots(ll).caxis) && strcmp(plots(ll).moment_field,moment_orig)
-              plots(ll).caxis_params.limits=plots(ll).caxis;
-            end
+            %if obj.params.caxis_lock(ll) && ~isempty(plots(ll).caxis) && strcmp(plots(ll).moment_field,moment_orig)
+            %  plots(ll).caxis_params.limits=plots(ll).caxis;
+            %end
             plot_info.call(obj,plots(ll),h,'options',plot_info.options);
             title(plots(ll).moment_field,'Interpreter','none')
             plots(ll).original_zoom = axis;
@@ -642,11 +642,11 @@ classdef emerald_api < handle
    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% caxis_lock
-    function caxis_lock(obj,ii)
-      obj.params.caxis_lock(ii) = ~obj.params.caxis_lock(ii);
-      set(findobj(obj.fig,'Type','uimenu','Label',['Panel ' num2str(ii)]),...
-          'Checked',obj.tf2onoff(obj.params.caxis_lock(ii)));
-    end
+%     function caxis_lock(obj,ii)
+%       obj.params.caxis_lock(ii) = ~obj.params.caxis_lock(ii);
+%       set(findobj(obj.fig,'Type','uimenu','Label',['Panel ' num2str(ii)]),...
+%           'Checked',obj.tf2onoff(obj.params.caxis_lock(ii)));
+%     end
     
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

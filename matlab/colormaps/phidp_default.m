@@ -1,6 +1,6 @@
 %Default colormap for reflectivity values
 
-function x = dbm_default(n);
+function x = phidp_default(n);
 
 
 if nargin==1 & isempty(n)

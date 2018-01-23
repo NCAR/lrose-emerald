@@ -41,17 +41,7 @@ classdef rhi_plot
       h = rhi_plot.plot(S,Z,ds.moments.(fld),'ax',ax,'az',median(ds.meta_data.azimuth),...
           'alt',ds.meta_data.alt,'radar_location',radar_location,options{:});
       
-      hcb=colorbar;
-      set(get(hcb,'Title'),'String',bar_units);
-      try
-          colormap(gca,fld_in.caxis_params.color_map);
-      end
-      try
-          caxis(fld_in.caxis_params.limits);
-      end
-      try
-          set(hcb,'YTick',fld_in.caxis_params.yticks);
-      end
+     emerald_utils.adjust_colors(ds.moments.(fld),fld_in.caxis_params,h,bar_units);
      
     end
     
