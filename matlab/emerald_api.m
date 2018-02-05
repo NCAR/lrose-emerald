@@ -328,8 +328,11 @@ classdef emerald_api < handle
       uimenu(ploth,'Label','Render Plots','Callback',@(x,y) obj.render_plots);
       uimenu(ploth,'Label','Zoom Lock','Callback',@(x,y) obj.zoom_lock,'Separator','on','Checked',obj.tf2onoff(obj.params.zoom_lock));
       %uimenu(ploth,'Label','Color Axis Lock','Callback',@(x,y) obj.caxis_lock,'Checked',obj.tf2onoff(obj.params.caxis_lock));
-      subploth=uimenu(ploth,'Label','Color Axis Lock');
+      %subploth=uimenu(ploth,'Label','Color Axis Lock');
       uimenu(ploth,'Label','Data Info Fields','Callback',@(x,y) obj.update_datainfo,'Separator','on');
+      
+      plota = uimenu(fig,'Label','Analysis');
+      uimenu(plota,'Label','Histogram from current axes (CTRL-click in polygon mode)','Callback',@(x,y) obj.plot_window_hist_from_polygon);
       
       % add submenu for color axis lock
 %       if length(obj.params.caxis_lock)~=obj.params.plot_panels
@@ -347,7 +350,7 @@ classdef emerald_api < handle
       uimenu(plotp,'Label','Polygon Mode','Callback',@(x,y) obj.plot_window_polygon_mode,'Checked',obj.tf2onoff(strcmp(obj.mode,'Polygon')));
       uimenu(plotp,'Label','Reset Polygon','Callback',@(x,y) obj.plot_window_polygon_reset);
       uimenu(plotp,'Label','Delete Last Point (Shift-click)','Callback',@(x,y) obj.plot_window_polygon_deletelast);
-      uimenu(plotp,'Label','Histogram from current axes (CTRL-click)','Callback',@(x,y) obj.plot_window_hist_from_polygon,'Separator','on');
+      %uimenu(plotp,'Label','Histogram from current axes (CTRL-click)','Callback',@(x,y) obj.plot_window_hist_from_polygon,'Separator','on');
       uimenu(plotp,'Label','Assign & Save to Variable','Callback',@(x,y) obj.assign_save_polygon_var,'Separator','on');
       uimenu(plotp,'Label','Append Polygon data to Variable','Callback',@(x,y) obj.save_polygon_data_to_var);
       
@@ -764,28 +767,38 @@ classdef emerald_api < handle
       if nargin<2 || isempty(ax)
         ax = gca;
       end
+            
+      ds = obj.get_current_dataset;
+      t = get_axes_text(ax);
+      
       hs = findobj(ax,'Type','surface');
       xdata = get(hs,'XData');
       ydata = get(hs,'YData');
-      cdata = get(hs,'CData');
+      %cdata = get(hs,'CData');
+      cdata = ds.moments.(t);
       
-      t = get_axes_text(ax);
-      if size(obj.polygon_list,1)<3
-        warndlg('You must have a polygon with at least 3 points','Invalid expression');
-        return;
+      if strcmp(obj.mode,'Polygon')
+          if size(obj.polygon_list,1)<3
+              warndlg('You must have a polygon with at least 3 points','Invalid expression');
+              return;
+          end
+          inds = inpolygon(xdata,ydata,obj.polygon_list([1:end 1],1),obj.polygon_list([1:end 1],2));
+          cdata=cdata(inds);
+      else
+          cdata=reshape(cdata,[],1);
       end
-      inds = inpolygon(xdata,ydata,obj.polygon_list([1:end 1],1),obj.polygon_list([1:end 1],2));
       %sum(inds(:))/prod(size(inds))
-      figure; [f,b] = hist(cdata(inds),50);
+      figure;
+      [f,b] = hist(cdata,50);
       bar(b,f,1);
       title(t,'Interpreter','none')
-      Num = sum(inds(:));
-      NNNum = sum(~isnan(cdata(inds)));
-      Mean = nan_mean(reshape(cdata(inds),[],1));
+      Num = length(cdata);
+      NNNum = sum(~isnan(cdata));
+      Mean = nan_mean(reshape(cdata,[],1));
       [~,ind] = max(f);
       Mode = b(ind);
-      Median = nan_median(reshape(cdata(inds),[],1));
-      SDev = nan_std(reshape(cdata(inds),[],1));
+      Median = nan_median(reshape(cdata,[],1));
+      SDev = nan_std(reshape(cdata,[],1));
       
       h = text(0,0,sprintf('N = %i\nNvalid = %i\nMean = %0.4g\nMode = %0.4g\nMedian = %0.4g\nSDev = %0.4g',Num,NNNum,Mean,Mode,Median,SDev));
       set(h,'Units','normalized','Position',[.98 .98],'HorizontalAlignment','right','VerticalAlignment','top');
