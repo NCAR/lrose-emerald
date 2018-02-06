@@ -333,6 +333,7 @@ classdef emerald_api < handle
       
       plota = uimenu(fig,'Label','Analysis');
       uimenu(plota,'Label','Histogram from current axes (CTRL-click in polygon mode)','Callback',@(x,y) obj.plot_window_hist_from_polygon);
+      uimenu(plota,'Label','Scatter plot from two variables','Callback',@(x,y) obj.plot_scatter_vars);
       
       % add submenu for color axis lock
 %       if length(obj.params.caxis_lock)~=obj.params.plot_panels
@@ -737,6 +738,7 @@ classdef emerald_api < handle
         obj.plot_window_polygon_mode_off;
         obj.mode = NaN;
         set(findobj(obj.fig,'Type','uimenu','Label','Polygon Mode'),'Checked','off')
+        set(findobj(obj.fig,'Type','uimenu','Label','Polygon'),'ForegroundColor','black');
       end
     end
     
@@ -750,7 +752,7 @@ classdef emerald_api < handle
       set(h,'ButtonDownFcn',@(x,y) obj.polygon_mode_bdf(x,y));
       obj.mode = 'Polygon';
       set(findobj(obj.fig,'Type','uimenu','Label','Polygon Mode'),'Checked','on');
-      
+      set(findobj(obj.fig,'Type','uimenu','Label','Polygon'),'ForegroundColor',[0.7 0 0]);
     end
     
     function plot_window_polygon_mode_off(obj)
@@ -937,6 +939,62 @@ classdef emerald_api < handle
     end
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    %% make scatter plot from two variables
+    
+   function plot_scatter_vars(obj)
+      var1=pick_scatter_vars(obj);      
+      var2=pick_scatter_vars(obj);
+      
+      ds = obj.get_current_dataset;
+      ax = gca;
+      
+      hs = findobj(ax,'Type','surface');
+      xdata = get(hs,'XData');
+      ydata = get(hs,'YData');
+
+      cdata1 = ds.moments.(var1{:});
+      cdata2 = ds.moments.(var2{:});
+      
+      if strcmp(obj.mode,'Polygon')
+          if size(obj.polygon_list,1)<3
+              warndlg('You must have a polygon with at least 3 points','Invalid expression');
+              return;
+          end
+          inds = inpolygon(xdata,ydata,obj.polygon_list([1:end 1],1),obj.polygon_list([1:end 1],2));
+          cdata1=cdata1(inds);
+          cdata2=cdata2(inds);
+      else
+          cdata1=reshape(cdata1,[],1);
+          cdata2=reshape(cdata2,[],1);
+      end
+
+       figure;
+       plot(cdata1,cdata2,'+');
+       title([var1{:} ' vs ' var2{:}],'Interpreter','none');
+       try
+          xlabel([ds.moments_info.(var1{:}).atts.long_name.data ' (' ds.moments_info.(var1{:}).atts.units.data ')'],...
+              'Interpreter','none');
+          ylabel([ds.moments_info.(var2{:}).atts.long_name.data ' (' ds.moments_info.(var2{:}).atts.units.data ')'],...
+              'Interpreter','none');
+       end
+   end
+    
+   function var_out=pick_scatter_vars(obj)
+   ds = obj.get_current_dataset;
+      moments = fieldnames(ds.moments);
+      di_flds = obj.datainfo_fields;
+      di_flds = cellfun(@(x) find(strcmp(x,moments)),di_flds);
+      
+      [selection,ok] = listdlg('ListString',moments,'SelectionMode','single','InitialValue',di_flds,'Name','Pick Moments to display');
+      
+      if ~ok 
+        return
+      end
+      
+      var_out = moments(selection);
+   end
+    
     %% datacursor_mode
     
     
