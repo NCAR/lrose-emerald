@@ -13,6 +13,11 @@ cfradial_base_datadir = '.';
 % plotting
 plot_panels = 4; % currently, 4 is the upper limit
 
+% default variables to plot when initializing. Must be cell with strings matching variable names
+% e.g. When none are chosen, the
+% first ones are plottet
+plot_vars={};
+
 % a list of the available plots.
 available_plots = emerald_utils.plot_struct('name','NONE');
 available_plots(end+1) = emerald_utils.plot_struct('name','PPI (XY)','call',@ppi_plot.call,'options',{'mode','polar'},'xy2ind',@ppi_plot.xy2ind);

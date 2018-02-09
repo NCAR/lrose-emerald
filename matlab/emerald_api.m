@@ -1308,9 +1308,16 @@ classdef emerald_api < handle
        plots = obj.default_plot_state_struct;
        old_plots = obj.plots;
        ah = obj.axes_handles_list;
+       
+       if size(obj.params.plot_vars,2)>size(obj.params.plot_vars,1)
+           obj.params.plot_vars=obj.params.plot_vars';
+       end
+       
        % run through the controls, pulling out the appropriate plot for each and setting the plots
        for ll = 1:obj.params.plot_panels
-           if ll>length(moments)
+           if size(obj.params.plot_vars,1)>=ll && max(ismember(moments,obj.params.plot_vars{ll}))
+               plots(ll).moment_field=obj.params.plot_vars{ll};
+           elseif ll>length(moments)
                plots(ll).moment_field = moments{length(moments)};
            else
                plots(ll).moment_field = moments{ll};

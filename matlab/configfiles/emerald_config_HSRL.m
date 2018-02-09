@@ -6,6 +6,11 @@
 % Default base data directory
 cfradial_base_datadir = '.';
 
+% default variables to plot when initializing. Must be cell with strings matching variable names
+% e.g. When none are chosen, the
+% first ones are plottet
+plot_vars={'BackScatterCoeff','ParticleDepolRatio','ExtinctionCoeff','OpticalDepth'};
+
 % default plot to use.  Must match the name of one of the available plots.
 %default_plot = 'BSCAN (range)';
 default_plot = 'BSCAN (altitude)';
