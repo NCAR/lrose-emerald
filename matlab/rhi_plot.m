@@ -41,7 +41,14 @@ classdef rhi_plot
       h = rhi_plot.plot(S,Z,ds.moments.(fld),'ax',ax,'az',median(ds.meta_data.azimuth),...
           'alt',ds.meta_data.alt,'radar_location',radar_location,options{:});
       
-     emerald_utils.adjust_colors(ds.moments.(fld),fld_in.caxis_params,h,bar_units);
+     emerald_utils.adjust_colors(fld_in.caxis_params,h,bar_units);
+     
+     if ~isempty(em.params.ax_limits.x)
+          xlim(em.params.ax_limits.x);
+      end
+      if ~isempty(em.params.ax_limits.y)
+          ylim(em.params.ax_limits.y);
+      end
      
     end
     

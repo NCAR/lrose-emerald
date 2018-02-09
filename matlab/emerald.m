@@ -40,6 +40,7 @@ function em = emerald(varargin)
 
 % $Revision: 1.2 $
 addpath(['.' filesep 'colormaps']);
+addpath(['.' filesep 'configfiles']);
 
 em = emerald_api(varargin{:});
 em.plot_window_create;

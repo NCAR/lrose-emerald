@@ -64,10 +64,16 @@ classdef bscan_plot
               ylabel('range (KM)');
           case 'altitude'
               ylabel('alt (KM)');
-              ylim([-1,8]);
       end
       
-      emerald_utils.adjust_colors(ds.moments.(fld),fld_in.caxis_params,h,bar_units);
+      emerald_utils.adjust_colors(fld_in.caxis_params,h,bar_units);
+      
+      if ~isempty(em.params.ax_limits.x)
+          xlim(em.params.ax_limits.x);
+      end
+      if ~isempty(em.params.ax_limits.y)
+          ylim(em.params.ax_limits.y);
+      end
       
     end
     
@@ -123,7 +129,7 @@ classdef bscan_plot
       
       %[x,y]=meshgrid(x,y);
       h = surfmat(x,y,fld,{'fix_coords',fix_coords,'no_colorbar',1});
-                 
+                      
       if flip
         set(gca,'YDir','reverse');
       end

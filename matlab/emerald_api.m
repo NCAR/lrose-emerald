@@ -335,7 +335,7 @@ classdef emerald_api < handle
       uimenu(plota,'Label','Histogram from current axes (CTRL-click in polygon mode)','Callback',@(x,y) obj.plot_window_hist_from_polygon);
       uimenu(plota,'Label','Scatter plot from two variables','Callback',@(x,y) obj.plot_scatter_vars);
       
-      % add submenu for color axis lock
+     % add submenu for color axis lock
 %       if length(obj.params.caxis_lock)~=obj.params.plot_panels
 %           obj.params.caxis_lock=cat(2,reshape(obj.params.caxis_lock,1,[]),ones(1,obj.params.plot_panels-length(obj.params.caxis_lock)));
 %       end
@@ -355,6 +355,7 @@ classdef emerald_api < handle
       uimenu(plotp,'Label','Assign & Save to Variable','Callback',@(x,y) obj.assign_save_polygon_var,'Separator','on');
       uimenu(plotp,'Label','Append Polygon data to Variable','Callback',@(x,y) obj.save_polygon_data_to_var);
       
+      %plotc = uimenu(fig,'Label','CrossSec','Callback',@(x,y) ppi_cross_section.plot_cross_section(obj));      
 
       ploth = uimenu(fig,'Label','Help');
       uimenu(ploth,'Label','About','Callback',@(x,y) obj.about);
@@ -779,6 +780,14 @@ classdef emerald_api < handle
       %cdata = get(hs,'CData');
       cdata = ds.moments.(t);
       
+      cdata=cat(1,cdata,cdata(end,:));
+      cdata=cat(2,cdata,cdata(:,end));
+      
+      % make sure data is facing the right way
+      if ~(size(cdata)==size(xdata))
+          cdata=cdata';
+      end
+      
       if strcmp(obj.mode,'Polygon')
           if size(obj.polygon_list,1)<3
               warndlg('You must have a polygon with at least 3 points','Invalid expression');
@@ -943,8 +952,13 @@ classdef emerald_api < handle
     %% make scatter plot from two variables
     
    function plot_scatter_vars(obj)
-      var1=pick_scatter_vars(obj);      
-      var2=pick_scatter_vars(obj);
+      var1=pick_vars(obj,'Variable 1');      
+      var2=pick_vars(obj,'Variable 2');
+      
+      if isempty(var1) | isempty(var2)
+          disp('No variables chosen.')
+          return;
+      end
       
       ds = obj.get_current_dataset;
       ax = gca;
@@ -955,6 +969,19 @@ classdef emerald_api < handle
 
       cdata1 = ds.moments.(var1{:});
       cdata2 = ds.moments.(var2{:});
+      
+      % duplicate last row and column to match size of xdata and ydata
+      % (this is necessary because of the way surfmat is set up
+      cdata1=cat(1,cdata1,cdata1(end,:));
+      cdata1=cat(2,cdata1,cdata1(:,end));
+      cdata2=cat(1,cdata2,cdata2(end,:));
+      cdata2=cat(2,cdata2,cdata2(:,end));
+      
+      % make sure data is facing the right way
+      if ~(size(cdata1)==size(xdata))
+          cdata1=cdata1';
+          cdata2=cdata2';
+      end
       
       if strcmp(obj.mode,'Polygon')
           if size(obj.polygon_list,1)<3
@@ -980,19 +1007,19 @@ classdef emerald_api < handle
        end
    end
     
-   function var_out=pick_scatter_vars(obj)
+   function var_out=pick_vars(obj,title_text)
    ds = obj.get_current_dataset;
       moments = fieldnames(ds.moments);
       di_flds = obj.datainfo_fields;
       di_flds = cellfun(@(x) find(strcmp(x,moments)),di_flds);
       
-      [selection,ok] = listdlg('ListString',moments,'SelectionMode','single','InitialValue',di_flds,'Name','Pick Moments to display');
+      [selection,ok] = listdlg('ListString',moments,'SelectionMode','single','InitialValue',di_flds,'Name',title_text);
       
       if ~ok 
-        return
+        var_out=[];
+      else      
+          var_out = moments(selection);
       end
-      
-      var_out = moments(selection);
    end
     
     %% datacursor_mode
@@ -1301,7 +1328,8 @@ classdef emerald_api < handle
     
     end
     
-    %%%%%%%%    
+   
+    %%%%%%%%
   end
   
   methods (Access = private)

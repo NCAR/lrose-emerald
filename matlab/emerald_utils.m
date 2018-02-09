@@ -126,19 +126,19 @@ classdef emerald_utils
          elseif ~isempty(strfind(fld,'PHIDP'))
              cax_par.color_map=colmap.phidp;
              cax_par.limits=axlim.phidp;
-         elseif ~isempty(strfind(fld,'temp'))
+         elseif ~isempty(strfind(fld,'temp')) | ~isempty(strfind(fld,'Temp'))
              cax_par.color_map=colmap.temp;
              cax_par.limits=axlim.temp;
-         elseif ~isempty(strfind(fld,'backscat'))
+         elseif ~isempty(strfind(fld,'backscat')) | ~isempty(strfind(fld,'BackScat'))
              cax_par.color_map=colmap.backscat;
              cax_par.limits=axlim.backscat;
-         elseif ~isempty(strfind(fld,'depol'))
+         elseif ~isempty(strfind(fld,'depol')) | ~isempty(strfind(fld,'Depol'))
              cax_par.color_map=colmap.depol;
              cax_par.limits=axlim.depol;
-         elseif ~isempty(strfind(fld,'od'))
+         elseif ~isempty(strfind(fld,'od')) | ~isempty(strfind(fld,'OpticalDepth'))
              cax_par.color_map=colmap.od;
              cax_par.limits=axlim.od;
-         elseif ~isempty(strfind(fld,'extinction'))
+         elseif ~isempty(strfind(fld,'extinction')) | ~isempty(strfind(fld,'Extinction'))
              cax_par.color_map=colmap.ext;
              cax_par.limits=axlim.ext;
          else
@@ -152,7 +152,8 @@ classdef emerald_utils
     end
     
     % adjust color map and add color bar to figures based on user input
-    function adjust_colors(fld,ax_params,h,bar_units)
+    function adjust_colors(ax_params,h,bar_units)
+        fld=h.CData;
         if ~isfield(ax_params,'limits')
             hcb=colorbar;
             set(get(hcb,'Title'),'String',bar_units);

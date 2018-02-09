@@ -25,8 +25,12 @@ available_plots(end+1) = emerald_utils.plot_struct('name','BSCAN (altitude)','ca
 % default plot to use.  Must match the name of one of the available plots.
 default_plot = 'PPI (XY)';
 
+% set the x and y limits of plots. If empty, matlab defaults will be used
+ax_limits.x=[];
+ax_limits.y=[];
+
 % If 1, then when the user switches datasets, the plots will maintain the same zoom.  Otherwise, it will
-% go back to the default zoom from the plotting routine
+% go back to the default zoom or ax_limits will be used
 zoom_lock = 1;
 
 % Vector of 0 or 1 corresponding to the figure panels.
