@@ -486,7 +486,39 @@ classdef emerald_databuffer
       data = EMERALD_DATABUFFER.datasets{ind};
     end
     
-    
+     %% sort_databuffer
+    function new_index=sort_databuffer(current_index)
+    % sort_databuffer: sorts the databuffer by filename 
+    % usage: get_dataset()
+    %
+    % Currently, the databuffer is stored in a global variable called EMERALD_DATABUFFER
+    % Do not use this variable directly.  'clear all' and 'clear global' will clear the
+    % buffer!
+    %
+      global EMERALD_DATABUFFER
+      [result,msg] = emerald_databuffer.check_given_databuffer(EMERALD_DATABUFFER);
+      if result
+        error('The databuffer is invalid:\n%s',msg);
+      end
+      
+      db = EMERALD_DATABUFFER;
+      
+      index_b=num2cell(1:1:length(db.index.filename));
+      name_ind=[db.index.filename;index_b]';
+      name_ind_sorted=sortrows(name_ind);
+      
+      new_index=find([name_ind_sorted{:,2}]==current_index);
+      
+      db_sorted.datasets=[];
+      db_sorted.index=struct;
+      
+      for ii=1:size(name_ind,1)
+      db_sorted.datasets = cat(2,db_sorted.datasets,db.datasets(find([name_ind_sorted{:,2}]==ii)));
+      end
+             
+      EMERALD_DATABUFFER = db_sorted;
+      emerald_databuffer.rebuild_index;
+    end
     
 
   end

@@ -599,20 +599,21 @@ classdef emerald_api < handle
       end
       
       % check if figure toolbar push buttens need to be updated
-      s = emerald_databuffer.databuffer_inventory_string;
-      s = regexp(s,sprintf('\n'),'split');
-      hPrev = findall(obj.fig, 'tooltipstring', 'Previous file');
-      hNext = findall(obj.fig, 'tooltipstring', 'Next file');
-      set(hPrev,'Enable','on')
-      set(hNext,'Enable','on')
-      % first file
-      if obj.current_dataset==1
-          set(hPrev,'Enable','off')
-      end
-      % last file
-      if obj.current_dataset==length(s)-2
-          set(hNext,'Enable','off')
-      end
+      check_arrows(obj);
+%       s = emerald_databuffer.databuffer_inventory_string;
+%       s = regexp(s,sprintf('\n'),'split');
+%       hPrev = findall(obj.fig, 'tooltipstring', 'Previous file');
+%       hNext = findall(obj.fig, 'tooltipstring', 'Next file');
+%       set(hPrev,'Enable','on')
+%       set(hNext,'Enable','on')
+%       % first file
+%       if obj.current_dataset==1
+%           set(hPrev,'Enable','off')
+%       end
+%       % last file
+%       if obj.current_dataset==length(s)-2
+%           set(hNext,'Enable','off')
+%       end
       
       %set mouse pointer back
       set(obj.fig, 'pointer', oldpointer)
@@ -1104,6 +1105,17 @@ classdef emerald_api < handle
       close(h);
       drawnow;
       
+      
+      obj.current_dataset=emerald_databuffer.sort_databuffer(obj.current_dataset);
+      
+      %update plot title
+      h = obj.plot_window_title;
+      s = emerald_databuffer.databuffer_inventory_string('dataset',obj.current_dataset,'mode',2);
+      set(h,'string',sprintf('(%i) %s',obj.current_dataset,s));
+      
+      %check if toolbar push buttons need to be updated
+      check_arrows(obj);
+      
       if isempty(obj.current_dataset)
         obj.current_dataset = 1;
       end
@@ -1335,7 +1347,24 @@ classdef emerald_api < handle
     
     end
     
-   
+     %% check_arrows
+     function check_arrows(obj)
+         % check if figure toolbar push buttens need to be updated
+         s = emerald_databuffer.databuffer_inventory_string;
+         s = regexp(s,sprintf('\n'),'split');
+         hPrev = findall(obj.fig, 'tooltipstring', 'Previous file');
+         hNext = findall(obj.fig, 'tooltipstring', 'Next file');
+         set(hPrev,'Enable','on')
+         set(hNext,'Enable','on')
+         % first file
+         if obj.current_dataset==1
+             set(hPrev,'Enable','off')
+         end
+         % last file
+         if obj.current_dataset==length(s)-2
+             set(hNext,'Enable','off')
+         end
+     end
     %%%%%%%%
   end
   
