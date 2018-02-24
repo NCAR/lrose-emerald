@@ -1105,7 +1105,7 @@ classdef emerald_api < handle
       close(h);
       drawnow;
       
-      
+      %sort the data buffer by input file name
       obj.current_dataset=emerald_databuffer.sort_databuffer(obj.current_dataset);
       
       %update plot title
@@ -1169,6 +1169,17 @@ classdef emerald_api < handle
       obj.fetch_by_filename_sweep(files,moment_fields(selection),'sweep_number',sweep_numbers,'default_plot',obj.params.default_plot);
       close(h);
       drawnow;
+      
+      %sort the data buffer by input file name
+      obj.current_dataset=emerald_databuffer.sort_databuffer(obj.current_dataset);
+      
+      %update plot title
+      h = obj.plot_window_title;
+      s = emerald_databuffer.databuffer_inventory_string('dataset',obj.current_dataset,'mode',2);
+      set(h,'string',sprintf('(%i) %s',obj.current_dataset,s));
+      
+      %check if toolbar push buttons need to be updated
+      check_arrows(obj);
       
       if isempty(obj.current_dataset)
         obj.current_dataset = 1;
