@@ -23,8 +23,10 @@ classdef emerald_api < handle
     axes_handles = []; % handles of all the axes on the figure
     fig = []; % handle of the figure
     current_dataset = 1; % pointer into the databuffer
+    plotted_dataset = []; % dataset currently plotted
     plot_window_title = [];
     plots = {}; % listing of the currently selected plots
+    plotted = {}; % plots that are actually currently in the figure
     polygon_list = []; % polygon listing
     mode = NaN; % current user mode (NaN,'polygon')
     links = {}; % listing of linked axes
@@ -236,7 +238,7 @@ classdef emerald_api < handle
     % function to redraw the main objects.  This should be called after a figure resize automatically
       obj.create_plot_window_title(varargin);
       obj.plot_window_add;
-      %obj.render_plots;
+      %obj.ender_plots;
 
       res = obj.check_plots || obj.check_plot_window('check_axes',1);
       if res
@@ -535,38 +537,53 @@ classdef emerald_api < handle
       % clear links
       obj.links = {};
       linkaxes(ah,'off');
+      
+      % check which plots actually need to be updated
+      if obj.current_dataset~=obj.plotted_dataset | isempty(obj.plotted)
+          to_plot=1:obj.params.plot_panels;
+      else
+          to_plot=[];
+          for ii=1:obj.params.plot_panels
+              if ~isequal(obj.plots(ii).moment_field,obj.plotted(ii).moment_field) ...
+                      | ~isequal(obj.plots(ii).plot_type,obj.plotted(ii).plot_type)
+                  to_plot=[to_plot ii];
+              end
+          end
+      end
+            
       % now run through list populating the plot
       plots = obj.plots;
       set(ah,'Nextplot','replace');
-      for ll = 1:obj.params.plot_panels
-        h = ah(ll);
-        moment_orig=h.Title.String; %original variable displayed in panel
-        plot_info = obj.params.available_plots(plots(ll).plot_type);
-        if ~isequal(plot_info.name,'NONE')
-          try 
-            if length(findobj(h))>1 
-              plots(ll).last_zoom = axis(h);
-              %plots(ll).caxis = caxis(h);
-            else
-              plots(ll).last_zoom = [];
-              %plots(ll).caxis = [];
-            end
-            %if obj.params.caxis_lock(ll) && ~isempty(plots(ll).caxis) && strcmp(plots(ll).moment_field,moment_orig)
-            %  plots(ll).caxis_params.limits=plots(ll).caxis;
-            %end
-            plot_info.call(obj,plots(ll),h,'options',plot_info.options);
-            title(plots(ll).moment_field,'Interpreter','none')
-            plots(ll).original_zoom = axis;
-            if obj.params.zoom_lock && ~isempty(plots(ll).last_zoom)
-              axis(h,plots(ll).last_zoom);
-            end
-          catch ME
-            cla(h);
-            %axes(h);
-            %text(.1,.95,sprintf('ERROR: %s',ME.message),'interpreter','none');
-            warning(sprintf('ERROR: %s',ME.message));
+      for kk = 1:length(to_plot)
+          ll=to_plot(kk);
+          h = ah(ll);
+          %moment_orig=h.Title.String; %original variable displayed in panel
+          plot_info = obj.params.available_plots(plots(ll).plot_type);
+          if ~isequal(plot_info.name,'NONE')
+              try
+                  if length(findobj(h))>1
+                      plots(ll).last_zoom = axis(h);
+                      %plots(ll).caxis = caxis(h);
+                  else
+                      plots(ll).last_zoom = [];
+                      %plots(ll).caxis = [];
+                  end
+                  %if obj.params.caxis_lock(ll) && ~isempty(plots(ll).caxis) && strcmp(plots(ll).moment_field,moment_orig)
+                  %  plots(ll).caxis_params.limits=plots(ll).caxis;
+                  %end
+                  plot_info.call(obj,plots(ll),h,'options',plot_info.options);
+                  title(plots(ll).moment_field,'Interpreter','none')
+                  plots(ll).original_zoom = axis;
+                  if obj.params.zoom_lock && ~isempty(plots(ll).last_zoom)
+                      axis(h,plots(ll).last_zoom);
+                  end
+              catch ME
+                  cla(h);
+                  %axes(h);
+                  %text(.1,.95,sprintf('ERROR: %s',ME.message),'interpreter','none');
+                  warning(sprintf('ERROR: %s',ME.message));
+              end
           end
-        end
       end
       % clear all but bottom xlabels, and all ny leftmost ylabels
       h = obj.axes_handles;
@@ -600,20 +617,10 @@ classdef emerald_api < handle
       
       % check if figure toolbar push buttens need to be updated
       check_arrows(obj);
-%       s = emerald_databuffer.databuffer_inventory_string;
-%       s = regexp(s,sprintf('\n'),'split');
-%       hPrev = findall(obj.fig, 'tooltipstring', 'Previous file');
-%       hNext = findall(obj.fig, 'tooltipstring', 'Next file');
-%       set(hPrev,'Enable','on')
-%       set(hNext,'Enable','on')
-%       % first file
-%       if obj.current_dataset==1
-%           set(hPrev,'Enable','off')
-%       end
-%       % last file
-%       if obj.current_dataset==length(s)-2
-%           set(hNext,'Enable','off')
-%       end
+
+      % save plotted variables so we can check them later
+      obj.plotted=plots;
+      obj.plotted_dataset=obj.current_dataset;
       
       %set mouse pointer back
       set(obj.fig, 'pointer', oldpointer)
@@ -1106,7 +1113,14 @@ classdef emerald_api < handle
       drawnow;
       
       %sort the data buffer by input file name
+      orig_dataset=obj.current_dataset;
       obj.current_dataset=emerald_databuffer.sort_databuffer(obj.current_dataset);
+      
+      if obj.plotted_dataset==orig_dataset
+          obj.plotted_dataset=obj.current_dataset;
+      else
+          obj.plotted_dataset=inf;
+      end
       
       %update plot title
       h = obj.plot_window_title;
