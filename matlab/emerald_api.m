@@ -572,6 +572,18 @@ classdef emerald_api < handle
                   %  plots(ll).caxis_params.limits=plots(ll).caxis;
                   %end
                   plot_info.call(obj,plots(ll),h,'options',plot_info.options);
+                  
+                  % add colorbar if necessary
+                  if isempty(obj.plotted) || ~isequal(obj.plots(ll).moment_field,obj.plotted(ll).moment_field)
+                      ds = obj.get_current_dataset;
+                      try
+                          bar_units=ds.moments_info.(fld).atts.units.data;
+                      catch
+                          bar_units='';
+                      end
+                      emerald_utils.add_colorbar(plots(ll).caxis_params,bar_units);
+                  end
+                  
                   title(plots(ll).moment_field,'Interpreter','none')
                   plots(ll).original_zoom = axis;
                   if obj.params.zoom_lock && ~isempty(plots(ll).last_zoom)

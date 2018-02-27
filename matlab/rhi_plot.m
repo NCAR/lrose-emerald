@@ -99,7 +99,7 @@ classdef rhi_plot
         set(fig,'CurrentAxes',ax);
       end
 
-      h = surfmat(S,Z,fld,{'fix_coords',fix_coords,'no_colorbar',1});
+      h = plot_surf(S,Z,fld);
       
       hold on
       if ~isempty(contour_field)

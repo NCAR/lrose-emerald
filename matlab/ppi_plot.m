@@ -152,7 +152,7 @@ classdef ppi_plot
         set(fig,'CurrentAxes',ax);
       end
 
-      h = surfmat(x,y,fld,{'fix_coords',fix_coords,'no_colorbar',1});
+      h = plot_surf(x,y,fld);
       
       maxalt = max(alt(:))+1;
       hold on

@@ -152,28 +152,15 @@ classdef emerald_utils
     end
     
     % adjust color map and add color bar to figures based on user input
-    function adjust_colors(ax_params,h,bar_units)
+    function adjust_colors(ax_params,h)
         fld=h.CData;
         if ~isfield(ax_params,'limits')
-            hcb=colorbar;
-            set(get(hcb,'Title'),'String',bar_units);
-            colormap(gca,ax_params.color_map);
+             colormap(gca,ax_params.color_map);
         elseif isempty(ax_params.limits)
-            hcb=colorbar;
-            set(get(hcb,'Title'),'String',bar_units);
-            colormap(gca,ax_params.color_map);
+             colormap(gca,ax_params.color_map);
         elseif length(ax_params.limits)==2
-            hcb=colorbar;
-            set(get(hcb,'Title'),'String',bar_units);
             colormap(gca,ax_params.color_map);
             caxis(ax_params.limits);
-            col_length=size(ax_params.color_map,1);
-            spacing=(ax_params.limits(2)-ax_params.limits(1))/(col_length);
-            caxis_yticks=[(ax_params.limits(1)+spacing):spacing:(ax_params.limits(2)-spacing)];
-            while length(caxis_yticks)>16
-                caxis_yticks=caxis_yticks(1:2:end);
-            end
-            set(hcb,'ytick',caxis_yticks);
         else
             col_def1 = nan(size(fld));
             col_def2 = nan(size(fld));
@@ -183,6 +170,7 @@ classdef emerald_utils
                 col_def1(col_ind)=ax_params.color_map(ii,1);
                 col_def2(col_ind)=ax_params.color_map(ii,2);
                 col_def3(col_ind)=ax_params.color_map(ii,3);
+                col_ind=find(fld>ax_params.limits(ii) & fld<=ax_params.limits(ii+1));
             end
             if ~isequal(size(col_def1),(size(fld)))
                 col_def=cat(3,col_def1',col_def2',col_def3');
@@ -190,11 +178,29 @@ classdef emerald_utils
                 col_def=cat(3,col_def1,col_def2,col_def3);
             end
             h.CData=col_def;
-            
-            hcb=colorbar;
-            set(get(hcb,'Title'),'String',bar_units);
             colormap(gca,ax_params.color_map);
             caxis([0 size(ax_params.color_map,1)]);
+      end
+    end
+    
+    % add color bar
+    function add_colorbar(ax_params,bar_units)
+        if ~isfield(ax_params,'limits') || isempty(ax_params.limits)
+            hcb=colorbar;
+            set(get(hcb,'Title'),'String',bar_units);
+        elseif length(ax_params.limits)==2
+            hcb=colorbar;
+            set(get(hcb,'Title'),'String',bar_units);
+            col_length=size(ax_params.color_map,1);
+            spacing=(ax_params.limits(2)-ax_params.limits(1))/(col_length);
+            caxis_yticks=[(ax_params.limits(1)+spacing):spacing:(ax_params.limits(2)-spacing)];
+            while length(caxis_yticks)>16
+                caxis_yticks=caxis_yticks(1:2:end);
+            end
+            set(hcb,'ytick',caxis_yticks);
+        else            
+            hcb=colorbar;
+            set(get(hcb,'Title'),'String',bar_units);
             caxis_yticks=(1:1:size(ax_params.color_map,1)-1);
             caxis_ytick_labels=num2str(ax_params.limits(2:end-1)');
             while length(caxis_yticks)>16
@@ -203,7 +209,7 @@ classdef emerald_utils
             end
             set(hcb,'ytick',caxis_yticks);
             set(hcb,'YTickLabel',caxis_ytick_labels);
-      end
+        end
     end
     
   end

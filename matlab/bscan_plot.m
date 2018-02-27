@@ -27,13 +27,7 @@ classdef bscan_plot
           mode = 'range';
           disp('Altitude data does not exist. Switching to "range" mode.');
       end
-      
-      try
-          bar_units=ds.moments_info.(fld).atts.units.data;
-      catch
-          bar_units='';
-      end
-      
+            
       if isempty(emerald_utils.check_fields_exist(ds.meta_data,'time')) && all(diff(ds.meta_data.time))~=0
         x = ds.meta_data.time-24*3600*(ds.meta_data.time_start_mld-ds.meta_data.time_coverage_start_mld);
         xl = sprintf('Seconds from %s',datestr(ds.meta_data.time_start_mld,'yyyy-mm-ddTHH:MM:SSZ'));
@@ -66,7 +60,7 @@ classdef bscan_plot
               ylabel('alt (KM)');
       end
       
-      emerald_utils.adjust_colors(fld_in.caxis_params,h,bar_units);
+      emerald_utils.adjust_colors(fld_in.caxis_params,h);
       
       if ~isempty(em.params.ax_limits.x)
           xlim(em.params.ax_limits.x);
@@ -128,7 +122,7 @@ classdef bscan_plot
       end
       
       %[x,y]=meshgrid(x,y);
-      h = surfmat(x,y,fld,{'fix_coords',fix_coords,'no_colorbar',1});
+      h = plot_surf(x,y,fld);
                       
       if flip
         set(gca,'YDir','reverse');
