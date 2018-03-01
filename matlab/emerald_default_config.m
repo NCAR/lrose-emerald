@@ -36,7 +36,7 @@ ax_limits.y=[];
 
 % If 1, then when the user switches datasets, the plots will maintain the same zoom.  Otherwise, it will
 % go back to the default zoom or ax_limits will be used
-zoom_lock = 1;
+zoom_lock = 0;
 
 % Vector of 0 or 1 corresponding to the figure panels.
 % If 1, then when the user switches datasets, the plots will maintain the same color scale.

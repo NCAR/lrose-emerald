@@ -50,7 +50,15 @@ classdef bscan_plot
               X = repmat(x,1,size(Y,1))';
       end
       
-      h = bscan_plot.plot(X,Y,ds.moments.(fld).','ax',ax,'flip',flip);
+      cdata_plot=emerald_utils.adjust_colors(ds.moments.(fld),fld_in.caxis_params);
+      
+      if length(size(cdata_plot))==3;
+          cdata_pass=permute(cdata_plot,[2 1 3]);
+      else
+          cdata_pass=cdata_plot.';
+      end
+      
+      h = bscan_plot.plot(X,Y,ds.moments.(fld).',cdata_pass,'ax',ax,'flip',flip);
       xlabel(xl);
       
       switch mode
@@ -60,7 +68,20 @@ classdef bscan_plot
               ylabel('alt (KM)');
       end
       
-      emerald_utils.adjust_colors(fld_in.caxis_params,h);
+%       %adjuds color map
+%       if ~isfield(fld_in.axis_params,'limits')
+%              colormap(gca,fld_in.axis_params.color_map);
+%         elseif isempty(fld_in.axis_params.limits)
+%              colormap(gca,fld_in.axis_params.color_map);
+%         elseif length(fld_in.axis_params.limits)==2
+%             colormap(gca,fld_in.axis_params.color_map);
+%             caxis(fld_in.axis_params.limits);
+%       else
+%             colormap(gca,fld_in.axis_params.color_map);
+%             caxis([0 size(fld_in.axis_params.color_map,1)]);
+%       end
+      
+      %emerald_utils.adjust_colors(fld_in.caxis_params,h);
       
       if ~isempty(em.params.ax_limits.x)
           xlim(em.params.ax_limits.x);
@@ -71,33 +92,7 @@ classdef bscan_plot
       
     end
     
-    % function bdf(obj,event_obj,em,fld,mode)
-    %   h = get(event_obj,'Target');
-    %   ok = strcmp(get(h,'Type'),'axes') || h==0;
-    %   while ~ok
-    %     h = get(h,'Parent');
-    %     ok = strcmp(get(h,'Type'),'axes') || h==0;
-    %   end
-    %   pos = get(event_obj,'Position');
-    %   data = em.get_current_dataset;
-    %   if strcmp(mode,'polar')
-    %     [~,ind] = min((pos(1)-data.meta_data.x(:)).^2+(pos(2)-data.meta_data.y(:)).^2);
-    %   else
-    %     [~,ind] = min((pos(1)-data.meta_data.lon(:)).^2+(pos(2)-data.meta_data.lat(:)).^2);
-    %   end
-    %   if length(ind)<1
-    %     return
-    %   end
-      
-    %   s = {sprintf('X: %4f',data.meta_data.x(ind)),
-    %                   sprintf('Y: %4f',data.meta_data.y(ind)),
-    %                   sprintf('Alt: %4f',data.meta_data.alt(ind)),
-    %                   sprintf('Lat: %4f',data.meta_data.lat(ind)),
-    %                   sprintf('Lon: %4f',data.meta_data.lon(ind))          };
-    %   figure;
-    %   uicontrol('Style','edit','Enable','inactive','Units','normalized','Position',[0 0 1 1],'String',s,'Tag',obj.plot_window_tag,'Max',1000,'HorizontalAlignment','left','FontName','fixedwidth');
-    % end
-    
+       
     function ind = xy2ind(plot_obj,pos,options)
       xdata = get(plot_obj,'XData');
       ydata = get(plot_obj,'YData');
@@ -107,7 +102,7 @@ classdef bscan_plot
     end
     
     
-    function h = plot(x,y,fld,varargin)
+    function h = plot(x,y,fld,cdata_plot,varargin)
       
       ax = [];
       fix_coords = 1;
@@ -121,8 +116,7 @@ classdef bscan_plot
         set(fig,'CurrentAxes',ax);
       end
       
-      %[x,y]=meshgrid(x,y);
-      h = plot_surf(x,y,fld);
+      h = plot_surf(x,y,fld,cdata_plot);
                       
       if flip
         set(gca,'YDir','reverse');

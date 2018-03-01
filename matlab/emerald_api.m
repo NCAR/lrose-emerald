@@ -577,7 +577,7 @@ classdef emerald_api < handle
                   if isempty(obj.plotted) || ~isequal(obj.plots(ll).moment_field,obj.plotted(ll).moment_field)
                       ds = obj.get_current_dataset;
                       try
-                          bar_units=ds.moments_info.(fld).atts.units.data;
+                          bar_units=ds.moments_info.(obj.plots(ll).moment_field).atts.units.data;
                       catch
                           bar_units='';
                       end

@@ -513,7 +513,7 @@ classdef emerald_databuffer
       db_sorted.index=struct;
       
       for ii=1:size(name_ind,1)
-      db_sorted.datasets = cat(2,db_sorted.datasets,db.datasets(find([name_ind_sorted{:,2}]==ii)));
+          db_sorted.datasets = cat(2,db_sorted.datasets,db.datasets(name_ind_sorted{ii,2}));
       end
              
       EMERALD_DATABUFFER = db_sorted;

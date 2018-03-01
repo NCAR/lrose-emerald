@@ -146,21 +146,47 @@ classdef emerald_utils
          end
         
          % use default
-        if isempty(cax_par.color_map)
-            cax_par.color_map=colormap(parula(24));
-        end
+         if isempty(cax_par.color_map)
+             cax_par.color_map=colormap(parula(24));
+         end
     end
     
+    %     % adjust color map and add color bar to figures based on user input
+    %     function adjust_colors(ax_params,h)
+    %         fld=h.CData;
+    %         if ~isfield(ax_params,'limits')
+    %              colormap(gca,ax_params.color_map);
+    %         elseif isempty(ax_params.limits)
+    %              colormap(gca,ax_params.color_map);
+    %         elseif length(ax_params.limits)==2
+    %             colormap(gca,ax_params.color_map);
+    %             caxis(ax_params.limits);
+    %         else
+    %             col_def1 = nan(size(fld));
+    %             col_def2 = nan(size(fld));
+    %             col_def3 = nan(size(fld));
+    %             for ii=1:size(ax_params.color_map,1)
+    %                 col_ind=find(fld>ax_params.limits(ii) & fld<=ax_params.limits(ii+1));
+    %                 col_def1(col_ind)=ax_params.color_map(ii,1);
+    %                 col_def2(col_ind)=ax_params.color_map(ii,2);
+    %                 col_def3(col_ind)=ax_params.color_map(ii,3);
+    %                 col_ind=find(fld>ax_params.limits(ii) & fld<=ax_params.limits(ii+1));
+    %             end
+    %             if ~isequal(size(col_def1),(size(fld)))
+    %                 col_def=cat(3,col_def1',col_def2',col_def3');
+    %             else
+    %                 col_def=cat(3,col_def1,col_def2,col_def3);
+    %             end
+    %             h.CData=col_def;
+    %             colormap(gca,ax_params.color_map);
+    %             caxis([0 size(ax_params.color_map,1)]);
+    %       end
+    %     end
+    
     % adjust color map and add color bar to figures based on user input
-    function adjust_colors(ax_params,h)
-        fld=h.CData;
-        if ~isfield(ax_params,'limits')
-             colormap(gca,ax_params.color_map);
-        elseif isempty(ax_params.limits)
-             colormap(gca,ax_params.color_map);
-        elseif length(ax_params.limits)==2
-            colormap(gca,ax_params.color_map);
-            caxis(ax_params.limits);
+    function col_def=adjust_colors(fld,ax_params)
+        if ~isfield(ax_params,'limits') || isempty(ax_params.limits) || length(ax_params.limits)==2
+            col_def=fld;
         else
             col_def1 = nan(size(fld));
             col_def2 = nan(size(fld));
@@ -170,25 +196,19 @@ classdef emerald_utils
                 col_def1(col_ind)=ax_params.color_map(ii,1);
                 col_def2(col_ind)=ax_params.color_map(ii,2);
                 col_def3(col_ind)=ax_params.color_map(ii,3);
-                col_ind=find(fld>ax_params.limits(ii) & fld<=ax_params.limits(ii+1));
             end
-            if ~isequal(size(col_def1),(size(fld)))
-                col_def=cat(3,col_def1',col_def2',col_def3');
-            else
-                col_def=cat(3,col_def1,col_def2,col_def3);
-            end
-            h.CData=col_def;
-            colormap(gca,ax_params.color_map);
-            caxis([0 size(ax_params.color_map,1)]);
-      end
+            col_def=cat(3,col_def1,col_def2,col_def3);
+        end
     end
     
     % add color bar
     function add_colorbar(ax_params,bar_units)
         if ~isfield(ax_params,'limits') || isempty(ax_params.limits)
+            colormap(gca,ax_params.color_map);
             hcb=colorbar;
             set(get(hcb,'Title'),'String',bar_units);
         elseif length(ax_params.limits)==2
+            colormap(gca,ax_params.color_map);
             hcb=colorbar;
             set(get(hcb,'Title'),'String',bar_units);
             col_length=size(ax_params.color_map,1);
@@ -199,9 +219,12 @@ classdef emerald_utils
             end
             set(hcb,'ytick',caxis_yticks);
         else            
+            colormap(gca,ax_params.color_map);
             hcb=colorbar;
-            set(get(hcb,'Title'),'String',bar_units);
-            caxis_yticks=(1:1:size(ax_params.color_map,1)-1);
+            set(get(hcb,'Title'),'String',bar_units);            
+            col_length=size(ax_params.color_map,1);
+            spacing=1/(col_length);
+            caxis_yticks=[spacing:spacing:(1-spacing)];
             caxis_ytick_labels=num2str(ax_params.limits(2:end-1)');
             while length(caxis_yticks)>16
                 caxis_yticks=caxis_yticks(1:2:end);

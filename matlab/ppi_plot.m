@@ -41,11 +41,12 @@ classdef ppi_plot
           Y = ds.meta_data.lat;
           radar_location = [rlat rlon ralt];
       end          
-      h = ppi_plot.plot(X,Y,ds.moments.(fld),'ax',ax,'elev',median(ds.meta_data.elevation),...
+      
+      cdata_plot=emerald_utils.adjust_colors(ds.moments.(fld),fld_in.caxis_params);
+            
+      h = ppi_plot.plot(X,Y,ds.moments.(fld),cdata_plot,'ax',ax,'elev',median(ds.meta_data.elevation),...
           'alt',ds.meta_data.alt,'radar_location',radar_location,options{:});
-      
-      emerald_utils.adjust_colors(fld_in.caxis_params,h,bar_units);
-      
+            
       if ~isempty(em.params.ax_limits.x)
           xlim(em.params.ax_limits.x);
       end
@@ -54,34 +55,7 @@ classdef ppi_plot
       end
   
     end
-    
-    % function bdf(obj,event_obj,em,fld,mode)
-    %   h = get(event_obj,'Target');
-    %   ok = strcmp(get(h,'Type'),'axes') || h==0;
-    %   while ~ok
-    %     h = get(h,'parent');
-    %     ok = strcmp(get(h,'Type'),'axes') || h==0;
-    %   end
-    %   pos = get(event_obj,'Position');
-    %   data = em.get_current_dataset;
-    %   if strcmp(mode,'polar')
-    %     [~,ind] = min((pos(1)-data.meta_data.x(:)).^2+(pos(2)-data.meta_data.y(:)).^2);
-    %   else
-    %     [~,ind] = min((pos(1)-data.meta_data.lon(:)).^2+(pos(2)-data.meta_data.lat(:)).^2);
-    %   end
-    %   if length(ind)<1
-    %     return
-    %   end
-      
-    %   s = {sprintf('X: %4f',data.meta_data.x(ind)),
-    %                   sprintf('Y: %4f',data.meta_data.y(ind)),
-    %                   sprintf('Alt: %4f',data.meta_data.alt(ind)),
-    %                   sprintf('Lat: %4f',data.meta_data.lat(ind)),
-    %                   sprintf('Lon: %4f',data.meta_data.lon(ind))          };
-    %   figure;
-    %   uicontrol('Style','edit','Enable','inactive','Units','normalized','Position',[0 0 1 1],'String',s,'Tag',obj.plot_window_tag,'Max',1000,'HorizontalAlignment','left','FontName','fixedwidth');
-    % end
-    
+        
     function ind = xy2ind(plot_obj,pos,options)
       xdata = get(plot_obj,'XData');
       ydata = get(plot_obj,'YData');
@@ -90,7 +64,7 @@ classdef ppi_plot
       ind = reshape(ind,1,[]);
     end
     
-    function h = plot(x,y,fld,varargin)
+    function h = plot(x,y,fld,cdata_plot,varargin)
       mode = 'polar'; % can be 'polar', or 'lonlat' or 'polar_elcorr
       radar_location = [0 0 0]; % depends on mode: 'polar' [x-km y-km z-km], 'lonlat' [lat-deg lon-deg alt-km]: this is for the grid
       alt = [];
@@ -116,10 +90,6 @@ classdef ppi_plot
       alt_tick_size = 14;
       paramparse(varargin,{'az_spokes'});
       alt_tick_az = az_spokes;
-
-      auto_zoom = 0;
-      auto_zoom_pct = 99.9;
-
 
       paramparse(varargin);
 
@@ -152,7 +122,7 @@ classdef ppi_plot
         set(fig,'CurrentAxes',ax);
       end
 
-      h = plot_surf(x,y,fld);
+      h = plot_surf(x,y,fld,cdata_plot);
       
       maxalt = max(alt(:))+1;
       hold on
@@ -169,91 +139,81 @@ classdef ppi_plot
       xlabel(thexaxis);
       ylabel(theyaxis);
 
-      hold on
       axis equal;
       axis fill;
       %axis square
-      ax = axis;
-
-      at = 0:1:360;
-      if isempty(range_rings)
-        ar = [0 max_az_spoke_range];
-      else
-        ar = [0 range_rings(end)];
-        [rrlat,rrlon,rralt,rrx,rry] = emerald_utils.polar2cart(range_rings,at,elev,radar_location);
-      end
-
-      asr = linspace(ar(1),ar(end),100);
-      if ~isempty(az_spokes)
-        [aslat,aslon,asalt,asx,asy] = emerald_utils.polar2cart(asr,az_spokes,elev,radar_location);
-      end
-
-      if ~isempty(alt_tick)
-        switch alt_tick_units
-          case 'ft'
-            asalt = asalt*3280.84;
-          case 'm'
-            asalt = asalt*1000;
-        end
-        alt_tick_ranges = interp1(asalt(1,:),asr,alt_tick,'linear');
-        [atlat,atlon,atalt,atx,aty] = emerald_utils.polar2cart(alt_tick_ranges,at,elev,radar_location);
-        switch alt_tick_units
-          case 'ft'
-            atalt = atalt*3280.84;
-          case 'm'
-            atalt = atalt*1000;
-        end
-        
-      end
-
-
-      switch mode
-        case {'polar','polar_elcorr'}
-          if ~isempty(range_rings)
-            hh = plot(rrx,rry,'k','HitTest','off');
+      
+      % if no lines are presesnt, draw range rings and spikes
+      h_old=findobj(gca, 'type', 'line');
+      if length(h_old)==0
+          ax = axis;
+          hold on
+          at = 0:1:360;
+          if isempty(range_rings)
+              ar = [0 max_az_spoke_range];
+          else
+              ar = [0 range_rings(end)];
+              [rrlat,rrlon,rralt,rrx,rry] = emerald_utils.polar2cart(range_rings,at,elev,radar_location);
           end
           
+          asr = linspace(ar(1),ar(end),100);
           if ~isempty(az_spokes)
-            hh = plot(asx.',asy.','k','HitTest','off');
-          end
-
-          if ~isempty(alt_tick)
-            %hh = plot(atx.',aty.',alt_tick_marker,'color',alt_tick_color,'markersize',alt_tick_size);
-            hh = plot(atx,aty,'LineStyle',':','Color',alt_tick_color,'MarkerSize',alt_tick_size,'HitTest','off');
-            for ll = 1:prod(size(atlon))
-              %hh = text(atx(ll),aty(ll),1,alt_tick_marker,'color',alt_tick_color,'fontsize',alt_tick_size,'horizontalalignment','center','verticalalignment','middle','rotation',-ats(ll));
-            end
+              [aslat,aslon,asalt,asx,asy] = emerald_utils.polar2cart(asr,az_spokes,elev,radar_location);
           end
           
-          axis(ax);
-          if auto_zoom
-            mdist = max(prctile(abs(x(~isnan(fld))),auto_zoom_pct),prctile(abs(y(~isnan(fld))),auto_zoom_pct));
-            axis([-1 1 -1 1]*mdist);
-          end
-        case 'lonlat'
-          if ~isempty(range_rings)
-            hh = plot(rrlon,rrlat,'k','HitTest','off');
+          if ~isempty(alt_tick)
+              switch alt_tick_units
+                  case 'ft'
+                      asalt = asalt*3280.84;
+                  case 'm'
+                      asalt = asalt*1000;
+              end
+              alt_tick_ranges = interp1(asalt(1,:),asr,alt_tick,'linear');
+              [atlat,atlon,atalt,atx,aty] = emerald_utils.polar2cart(alt_tick_ranges,at,elev,radar_location);
+              switch alt_tick_units
+                  case 'ft'
+                      atalt = atalt*3280.84;
+                  case 'm'
+                      atalt = atalt*1000;
+              end
+              
           end
           
-          if ~isempty(az_spokes)
-            hh = plot(aslon.',aslat.','k','HitTest','off');
-          end
-
-          if ~isempty(alt_tick)
-            hh = plot(atlon,atlat,alt_tick_marker,'Color',alt_tick_color,'MarkerSize',alt_tick_size,'HitTest','off');
-            for ll = 1:prod(size(atlon))
-              hh = text(atlon(ll),atlat(ll),1,alt_tick_marker,'Color',alt_tick_color,'FontSize',alt_tick_size,'HorizontalAlignment','center','VerticalAlignment','middle','Rotation',-ats(ll));
-            end
-          end
-
-          axis(ax);
-          if auto_zoom
-            mdist = max(prctile(abs(x(~isnan(fld))),auto_zoom_pct),prctile(abs(y(~isnan(fld))),auto_zoom_pct));
-            axis([-1 1 -1 1]*mdist);
-          end
-      end;
-
-      hold off
+          
+          switch mode
+              case {'polar','polar_elcorr'}
+                  if ~isempty(range_rings)
+                      hh = plot(rrx,rry,'k','HitTest','off');
+                  end
+                  
+                  if ~isempty(az_spokes)
+                      hh = plot(asx.',asy.','k','HitTest','off');
+                  end
+                  
+                  if ~isempty(alt_tick)
+                      hh = plot(atx,aty,'LineStyle',':','Color',alt_tick_color,'MarkerSize',alt_tick_size,'HitTest','off');
+                  end
+                  
+              case 'lonlat'
+                  if ~isempty(range_rings)
+                      hh = plot(rrlon,rrlat,'k','HitTest','off');
+                  end
+                  
+                  if ~isempty(az_spokes)
+                      hh = plot(aslon.',aslat.','k','HitTest','off');
+                  end
+                  
+                  if ~isempty(alt_tick)
+                      hh = plot(atlon,atlat,alt_tick_marker,'Color',alt_tick_color,'MarkerSize',alt_tick_size,'HitTest','off');
+                      for ll = 1:prod(size(atlon))
+                          hh = text(atlon(ll),atlat(ll),1,alt_tick_marker,'Color',alt_tick_color,'FontSize',alt_tick_size,'HorizontalAlignment','center','VerticalAlignment','middle','Rotation',-ats(ll));
+                      end
+                  end
+                  
+          end;
+          
+          hold off
+      end
     end
 
   end

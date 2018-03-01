@@ -38,11 +38,11 @@ classdef rhi_plot
       [~,~,ralt] = emerald_utils.get_platform_midloc(ds.meta_data.latitude,ds.meta_data.longitude,ds.meta_data.altitude);
       radar_location = [0 0 ralt];
       
-      h = rhi_plot.plot(S,Z,ds.moments.(fld),'ax',ax,'az',median(ds.meta_data.azimuth),...
+      cdata_plot=emerald_utils.adjust_colors(ds.moments.(fld),fld_in.caxis_params);
+            
+      h = rhi_plot.plot(S,Z,ds.moments.(fld),cdata_plot,'ax',ax,'az',median(ds.meta_data.azimuth),...
           'alt',ds.meta_data.alt,'radar_location',radar_location,options{:});
-      
-     emerald_utils.adjust_colors(fld_in.caxis_params,h,bar_units);
-     
+        
      if ~isempty(em.params.ax_limits.x)
           xlim(em.params.ax_limits.x);
       end
@@ -60,7 +60,7 @@ classdef rhi_plot
       ind = reshape(ind,1,[]);
     end
     
-    function h = plot(S,Z,fld,varargin)
+    function h = plot(S,Z,fld,cdata_plot,varargin)
       radar_location = [0 0 0]; % depends on mode: 'polar' [x-km y-km z-km], 'lonlat' [lat-deg lon-deg alt-km]: this is for the grid
       alt = [];
       az = NaN;
@@ -68,25 +68,9 @@ classdef rhi_plot
       fix_coords = 1;
       contour_field = [];
       contour_vals = [];
-      
-      % grid info
-      %range_rings = 50:50:450;
-      %elev_spokes = 0:30:359;
+    
       max_alt = 25;
       
-      %paramparse(varargin,{'range_rings'});
-      %max_az_spoke_range = range_rings(end);
-
-      % this functionality is not all working
-      %alt_tick = []; % units based on alt_tick_units
-      %alt_tick_msl = 0; % if 1 then based on msl, otherwise altitude above radar
-      %alt_tick_units = 'ft'; % 'ft','m','km'
-      %alt_tick_marker = '+'; 
-      %alt_tick_color = [.2 .2 .2]; 
-      %alt_tick_size = 14;
-      %paramparse(varargin,{'az_spokes'});
-      %alt_tick_az = az_spokes;
-
       auto_zoom = 0;
       auto_zoom_pct = 99.9;
 
@@ -99,7 +83,7 @@ classdef rhi_plot
         set(fig,'CurrentAxes',ax);
       end
 
-      h = plot_surf(S,Z,fld);
+      h = plot_surf(S,Z,fld,cdata_plot);
       
       hold on
       if ~isempty(contour_field)
