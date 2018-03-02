@@ -110,9 +110,10 @@ else
     h.YData=varargin{1,2};
     h.ZData=varargin{1,3};
     caxis manual
-    h.CData=varargin{1,4};    
+    h.CData=varargin{1,4};
 end
-return;
+%return;
+end
 
 %%%%%%%%%%%%%%%%%
 function [vout] = process_varargin(vin)
@@ -127,7 +128,7 @@ function [vout] = process_varargin(vin)
 %   v = {v};
 % end;
 
-if length(size(vin{4}))==3;
+if length(size(vin{4}))==3
     v=vin(1:3);
     v{end+1}=vin{4}(:,:,1);
     v{end+1}=vin{4}(:,:,2);
@@ -161,7 +162,7 @@ for l = 1:num_arg
             v{l}([1 2],[1 2]) = v{l}(1);
         end
     elseif length(v{l})>1
-        if methodvec(l) == 2;
+        if methodvec(l) == 2
             % extend x or y
             v{l} = shiftdim(v{l});
             if realndims(v{l})==2
@@ -183,7 +184,7 @@ for l = 1:num_arg
 end
 
 for l = 1:num_arg
-    if length(v{l})>1 && methodvec(l) == 2;
+    if length(v{l})>1 && methodvec(l) == 2
         % adjust x or y
         if realndims(v{l})==2
             if l == 1
@@ -196,7 +197,7 @@ for l = 1:num_arg
                 % with the same step size, then average 1:end-1 to 2:end
                 v{l} = cat(1,2*v{l}(1,:)-v{l}(2,:),v{l});
                 v{l} = (v{l}(1:(end-1),:)+v{l}(2:end,:))/2;
-            end;
+            end
         else
             % in case of 1-D, just add the first delta to the first number
             % and add this to the beginning, then average 1:end-1 and 2:end.
@@ -204,19 +205,20 @@ for l = 1:num_arg
             v{l} = (v{l}(1:(end-1))+v{l}(2:end))/2;
         end
     end
-    
-    if num_arg==4
-        vout=v;
-    elseif num_arg==6
-        color_out=zeros(size(v{4},1),size(v{4},2),3);
-        color_out(:,:,1)=v{4};
-        color_out(:,:,2)=v{5};
-        color_out(:,:,3)=v{6};
-        vout=cell(1,4);
-        vout(1:3)=v(1:3);
-        vout(4)={color_out};
-    else
-        disp('Wrong number of input arguments.');
-        return
-    end
+end
+
+if num_arg==4
+    vout=v;
+elseif num_arg==6
+    color_out=zeros(size(v{4},1),size(v{4},2),3);
+    color_out(:,:,1)=v{4};
+    color_out(:,:,2)=v{5};
+    color_out(:,:,3)=v{6};
+    vout=cell(1,4);
+    vout(1:3)=v(1:3);
+    vout(4)={color_out};
+else
+    disp('Wrong number of input arguments.');
+    return
+end
 end

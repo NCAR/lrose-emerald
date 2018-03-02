@@ -607,7 +607,8 @@ classdef emerald_api < handle
               end
           end
       end
-      % clear all but bottom xlabels, and all ny leftmost ylabels
+      
+      % plot labels where necessary
       h_all = obj.axes_handles;
       
       labels_panel=reshape(labels_panel,size(h_all))';
