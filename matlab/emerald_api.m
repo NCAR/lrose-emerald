@@ -538,7 +538,7 @@ classdef emerald_api < handle
       obj.links = {};
       linkaxes(ah,'off');
       
-      % check which plots actually need to be updated
+      % check which plots have changed need to be updated
       if obj.current_dataset~=obj.plotted_dataset | isempty(obj.plotted)
           to_plot=1:obj.params.plot_panels;
       else
@@ -551,29 +551,28 @@ classdef emerald_api < handle
           end
       end
             
+      labels_panel=cell(obj.params.plot_panels,1);
       % now run through list populating the plot
       plots = obj.plots;
       set(ah,'Nextplot','replace');
       for kk = 1:length(to_plot)
           ll=to_plot(kk);
           h = ah(ll);
-          %moment_orig=h.Title.String; %original variable displayed in panel
           plot_info = obj.params.available_plots(plots(ll).plot_type);
           if ~isequal(plot_info.name,'NONE')
               try
+                  % save zoom info
                   if length(findobj(h))>1
                       plots(ll).last_zoom = axis(h);
-                      %plots(ll).caxis = caxis(h);
                   else
                       plots(ll).last_zoom = [];
-                      %plots(ll).caxis = [];
                   end
-                  %if obj.params.caxis_lock(ll) && ~isempty(plots(ll).caxis) && strcmp(plots(ll).moment_field,moment_orig)
-                  %  plots(ll).caxis_params.limits=plots(ll).caxis;
-                  %end
-                  plot_info.call(obj,plots(ll),h,'options',plot_info.options);
                   
-                  % add colorbar if necessary
+                  %actual plotting routine
+                 [h labels_panel{ll}]=plot_info.call(obj,plots(ll),h,'options',plot_info.options);
+                  
+                  % check which plot components need to be updated
+                  % colorbar and title
                   if isempty(obj.plotted) || ~isequal(obj.plots(ll).moment_field,obj.plotted(ll).moment_field)
                       ds = obj.get_current_dataset;
                       try
@@ -582,13 +581,24 @@ classdef emerald_api < handle
                           bar_units='';
                       end
                       emerald_utils.add_colorbar(plots(ll).caxis_params,bar_units);
+                      %plot title if necessary
+                      title(plots(ll).moment_field,'Interpreter','none')
                   end
                   
-                  title(plots(ll).moment_field,'Interpreter','none')
                   plots(ll).original_zoom = axis;
+                  
+                  % axis limits
                   if obj.params.zoom_lock && ~isempty(plots(ll).last_zoom)
                       axis(h,plots(ll).last_zoom);
+                  else
+                      if ~isempty(obj.params.ax_limits.x)
+                          xlim(obj.params.ax_limits.x);
+                      end
+                      if ~isempty(obj.params.ax_limits.y)
+                          ylim(obj.params.ax_limits.y);
+                      end
                   end
+                  
               catch ME
                   cla(h);
                   %axes(h);
@@ -598,17 +608,29 @@ classdef emerald_api < handle
           end
       end
       % clear all but bottom xlabels, and all ny leftmost ylabels
-      h = obj.axes_handles;
-      h = h(:,2:end);
+      h_all = obj.axes_handles;
+      
+      labels_panel=reshape(labels_panel,size(h_all))';
+            
+      h = h_all(:,1);
       h = h(ishandle(h));
+      
       for ll = 1:length(h)
-        ylabel(h(ll),'');
+          current_label=h(ll).YLabel.String;
+          if ~isempty(labels_panel{ll,1}) && ...
+                  (isempty(current_label) || ~strcmp(current_label,labels_panel{ll,1}{2,1}))
+              ylabel(h(ll),labels_panel{ll,1}{2,1});
+          end
       end
-      h = obj.axes_handles;
-      h = h(1:end-1,:);
+      
+      h = h_all(end,:);
       h = h(ishandle(h));
       for ll = 1:length(h)
-        xlabel(h(ll),'');
+          current_label=h(ll).XLabel.String;
+          if ~isempty(labels_panel{end,ll}) && ...
+                  (isempty(current_label) || ~strcmp(current_label,labels_panel{end,ll}{1,1}))
+              xlabel(h(ll),labels_panel{end,ll}{1,1});
+          end
       end
       
       U = obj.get_active_plot_types;
@@ -620,8 +642,12 @@ classdef emerald_api < handle
       end
 
       h = obj.plot_window_title;
+      old_title=h.String;
       s = emerald_databuffer.databuffer_inventory_string('dataset',obj.current_dataset,'mode',2);
-      set(h,'string',sprintf('(%i) %s',obj.current_dataset,s));
+      new_title=sprintf('(%i) %s',obj.current_dataset,s);
+      if ~strcmp(old_title,new_title)
+          set(h,'string',new_title);
+      end
       
       if ~isempty(obj.polygon_list)
           obj.redraw_polygon;

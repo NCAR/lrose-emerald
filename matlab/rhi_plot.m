@@ -8,7 +8,7 @@ classdef rhi_plot
 % $Revision: 1.1 $
   methods (Static = true)
 
-    function h = call(em,fld_in,ax,varargin)
+    function [h labels_out] = call(em,fld_in,ax,varargin)
       options = {};
       
       fld=fld_in.moment_field;
@@ -40,16 +40,8 @@ classdef rhi_plot
       
       cdata_plot=emerald_utils.adjust_colors(ds.moments.(fld),fld_in.caxis_params);
             
-      h = rhi_plot.plot(S,Z,ds.moments.(fld),cdata_plot,'ax',ax,'az',median(ds.meta_data.azimuth),...
+      [h labels_out] = rhi_plot.plot(S,Z,ds.moments.(fld),cdata_plot,'ax',ax,'az',median(ds.meta_data.azimuth),...
           'alt',ds.meta_data.alt,'radar_location',radar_location,options{:});
-        
-     if ~isempty(em.params.ax_limits.x)
-          xlim(em.params.ax_limits.x);
-      end
-      if ~isempty(em.params.ax_limits.y)
-          ylim(em.params.ax_limits.y);
-      end
-     
     end
     
     function ind = xy2ind(plot_obj,pos,options)
@@ -60,7 +52,7 @@ classdef rhi_plot
       ind = reshape(ind,1,[]);
     end
     
-    function h = plot(S,Z,fld,cdata_plot,varargin)
+    function [h labels_out] = plot(S,Z,fld,cdata_plot,varargin)
       radar_location = [0 0 0]; % depends on mode: 'polar' [x-km y-km z-km], 'lonlat' [lat-deg lon-deg alt-km]: this is for the grid
       alt = [];
       az = NaN;
@@ -71,10 +63,6 @@ classdef rhi_plot
     
       max_alt = 25;
       
-      auto_zoom = 0;
-      auto_zoom_pct = 99.9;
-
-
       paramparse(varargin);
 
       if ~isempty(ax)
@@ -96,8 +84,7 @@ classdef rhi_plot
         end;
         contour(S,Z,tmp,xopts{:},'k');
       end
-      xlabel('Distance (km)');
-      ylabel('MSL Altitude (km)');
+      labels_out={'Distance (km)';'MSL Altitude (km)'};
 
       axis fill;
       if ~isempty(max_alt) 

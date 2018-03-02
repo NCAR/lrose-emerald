@@ -8,7 +8,7 @@ classdef ppi_plot
 % $Revision: 1.5 $
   methods (Static = true)
 
-    function h = call(em,fld_in,ax,varargin)
+    function [h labels_out]= call(em,fld_in,ax,varargin)
       options = {};
       
       fld=fld_in.moment_field;
@@ -20,12 +20,7 @@ classdef ppi_plot
       paramparse(options,'mode');
       
       ds = em.get_current_dataset;
-      %try to find a unit for the field
-      try
-          bar_units=ds.moments_info.(fld).atts.units.data;
-      catch
-          bar_units='';
-      end
+     
       [rlat,rlon,ralt] = emerald_utils.get_platform_midloc(ds.meta_data.latitude,ds.meta_data.longitude,ds.meta_data.altitude);
       switch mode
         case 'polar'
@@ -44,16 +39,9 @@ classdef ppi_plot
       
       cdata_plot=emerald_utils.adjust_colors(ds.moments.(fld),fld_in.caxis_params);
             
-      h = ppi_plot.plot(X,Y,ds.moments.(fld),cdata_plot,'ax',ax,'elev',median(ds.meta_data.elevation),...
+      [h labels_out] = ppi_plot.plot(X,Y,ds.moments.(fld),cdata_plot,'ax',ax,'elev',median(ds.meta_data.elevation),...
           'alt',ds.meta_data.alt,'radar_location',radar_location,options{:});
-            
-      if ~isempty(em.params.ax_limits.x)
-          xlim(em.params.ax_limits.x);
-      end
-      if ~isempty(em.params.ax_limits.y)
-          ylim(em.params.ax_limits.y);
-      end
-  
+      
     end
         
     function ind = xy2ind(plot_obj,pos,options)
@@ -64,7 +52,7 @@ classdef ppi_plot
       ind = reshape(ind,1,[]);
     end
     
-    function h = plot(x,y,fld,cdata_plot,varargin)
+    function [h labels_out]= plot(x,y,fld,cdata_plot,varargin)
       mode = 'polar'; % can be 'polar', or 'lonlat' or 'polar_elcorr
       radar_location = [0 0 0]; % depends on mode: 'polar' [x-km y-km z-km], 'lonlat' [lat-deg lon-deg alt-km]: this is for the grid
       alt = [];
@@ -136,8 +124,8 @@ classdef ppi_plot
         end;
         contour(x,y,tmp,xopts{:},'k');
       end
-      xlabel(thexaxis);
-      ylabel(theyaxis);
+     
+      labels_out={thexaxis;theyaxis};
 
       axis equal;
       axis fill;
@@ -146,7 +134,6 @@ classdef ppi_plot
       % if no lines are presesnt, draw range rings and spikes
       h_old=findobj(gca, 'type', 'line');
       if length(h_old)==0
-          ax = axis;
           hold on
           at = 0:1:360;
           if isempty(range_rings)

@@ -8,7 +8,7 @@ classdef bscan_plot
 % $Revision: 1.7 $
   methods (Static = true)
 
-    function h = call(em,fld_in,ax,varargin)
+    function [h labels_out] = call(em,fld_in,ax,varargin)
       %dataset = em.current_dataset;
       options = {};
       
@@ -59,36 +59,15 @@ classdef bscan_plot
       end
       
       h = bscan_plot.plot(X,Y,ds.moments.(fld).',cdata_pass,'ax',ax,'flip',flip);
-      xlabel(xl);
-      
+           
       switch mode
           case 'range'
-              ylabel('range (KM)');
+              yl='range (KM)';
           case 'altitude'
-              ylabel('alt (KM)');
+              yl='alt (KM)';
       end
       
-%       %adjuds color map
-%       if ~isfield(fld_in.axis_params,'limits')
-%              colormap(gca,fld_in.axis_params.color_map);
-%         elseif isempty(fld_in.axis_params.limits)
-%              colormap(gca,fld_in.axis_params.color_map);
-%         elseif length(fld_in.axis_params.limits)==2
-%             colormap(gca,fld_in.axis_params.color_map);
-%             caxis(fld_in.axis_params.limits);
-%       else
-%             colormap(gca,fld_in.axis_params.color_map);
-%             caxis([0 size(fld_in.axis_params.color_map,1)]);
-%       end
-      
-      %emerald_utils.adjust_colors(fld_in.caxis_params,h);
-      
-      if ~isempty(em.params.ax_limits.x)
-          xlim(em.params.ax_limits.x);
-      end
-      if ~isempty(em.params.ax_limits.y)
-          ylim(em.params.ax_limits.y);
-      end
+      labels_out={xl;yl};
       
     end
     
