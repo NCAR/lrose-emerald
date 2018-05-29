@@ -133,6 +133,8 @@ if length(size(vin{4}))==3
     v{end+1}=vin{4}(:,:,1);
     v{end+1}=vin{4}(:,:,2);
     v{end+1}=vin{4}(:,:,3);
+else
+    v=vin;
 end
 
 % Count the number of numeric arguments:

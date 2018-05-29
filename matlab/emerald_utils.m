@@ -96,7 +96,7 @@ classdef emerald_utils
     
     % find color map based on input field
     function cax_par=find_caxis_params(fld,axlim,colmap)
-         if ~isempty(strfind(fld,'DBZ'))
+         if ~isempty(strfind(fld,'DBZ')) | ~isempty(strfind(fld,'Reflectivity'))
             cax_par.color_map=colmap.dbz;
             cax_par.limits=axlim.dbz;
         elseif ~isempty(strfind(fld,'DBM'))
@@ -111,7 +111,7 @@ classdef emerald_utils
         elseif ~isempty(strfind(fld,'SNR'))
             cax_par.color_map=colmap.snr;
             cax_par.limits=axlim.snr;
-         elseif ~isempty(strfind(fld,'VEL'))
+         elseif ~isempty(strfind(fld,'VEL')) | ~isempty(strfind(fld,'Velocity'))
              cax_par.color_map=colmap.vel;
              cax_par.limits=axlim.vel;
          elseif ~isempty(strfind(fld,'WIDTH'))

@@ -85,6 +85,7 @@ classdef NetcdfCommon < handle
       outname = strrep(outname,'\','__BKSL__');
       outname = strrep(outname,'[','__OPBR__');
       outname = strrep(outname,']','__CLBR__');
+      outname = strrep(outname,'+','__PLUS__');
       outname = obj.strip_(outname);
       outname = obj.pad_leading(outname);
       return
@@ -97,6 +98,7 @@ classdef NetcdfCommon < handle
       outname = obj.strrepb(outname,'__BACKSLASH__','\');
       outname = obj.strrepb(outname,'__OPENBRACKET__','[');
       outname = obj.strrepb(outname,'__CLOSEBRACKET__',']');
+      outname = obj.strrepb(outname,'__PLUS__','+');
       return;
     end
     
@@ -651,6 +653,8 @@ classdef NetcdfCommon < handle
         % get variable dimensions
         if p.getvardim
           dimids = vars(k).dimids;
+          % check if variable name is valid
+          
           vardata.(vars(k).varname).dims = cell(1,0);
           for l = dimids
             dimname = netcdf.inqDim(nc,l);
